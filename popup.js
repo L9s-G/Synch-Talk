@@ -9,7 +9,7 @@ const sendBtn = document.getElementById('send-btn');
 const tutorModeToggle = document.getElementById('tutor-mode-toggle');
 
 // 定义支持的语言
-const languages = ['Chinese', 'English', 'Greek'];
+const languages = ['Chinese', 'English', 'Greek', 'Japanese'];
 
 // 用于存储当前选中的目标语言
 let selectedTargetLanguages = [];
@@ -47,23 +47,6 @@ function populateLanguages() {
       checkbox.checked = true;
       selectedTargetLanguages.push(lang);
     }
-
-    // 关键修改点：将事件监听器绑定到整个 optionDiv
-    optionDiv.addEventListener('click', (event) => {
-      // 如果点击的是label或checkbox本身，则让其默认行为处理
-      if (event.target === checkbox || event.target === label) {
-        if (optionDiv.classList.contains('disabled')) {
-          event.preventDefault();
-        }
-        return;
-      }
-      
-      // 如果点击的是行背景，切换checkbox状态
-      if (!checkbox.disabled) {
-        checkbox.checked = !checkbox.checked;
-        updateSelectedTargetLanguages();
-      }
-    });
   });
   updateSelectedTargetLanguages();
 }
@@ -96,6 +79,26 @@ function updateTargetLanguagesAvailability() {
   });
   updateSelectedTargetLanguages();
 }
+
+// --- 关键修复点: 统一处理语言选项的点击事件 ---
+targetLangOptionsContainer.addEventListener('click', (event) => {
+  const clickedOption = event.target.closest('.custom-select-option');
+  if (clickedOption) {
+    const checkbox = clickedOption.querySelector('input[type="checkbox"]');
+    // 如果复选框未被禁用，则切换其选中状态并更新UI
+    if (checkbox && !checkbox.disabled) {
+      // 检查点击的元素是否是label或checkbox本身
+      // 如果是，其默认行为会处理选中状态。我们只负责更新UI。
+      // 如果不是，我们手动切换选中状态，并更新UI。
+      if (event.target !== checkbox && event.target !== clickedOption.querySelector('label')) {
+        checkbox.checked = !checkbox.checked;
+      }
+      // 无论如何，都调用更新函数来确保UI与选中状态同步
+      updateSelectedTargetLanguages();
+    }
+  }
+});
+// ---------------------------------------------
 
 
 // 监听源语言下拉菜单的变化
@@ -155,14 +158,12 @@ function createMessageBubble(text, className, originalFullText = null) {
           checkResult.classList.add('reverse-check-result');
           checkResult.textContent = `反向校验 (EN): ${response.text}`;
           messageEl.appendChild(checkResult);
-          // 关键修复：当结果成功时添加类
           messageEl.classList.add('has-reverse-check');
         } else {
           const checkResult = document.createElement('div');
           checkResult.classList.add('reverse-check-result');
           checkResult.textContent = `反向校验失败。`;
           messageEl.appendChild(checkResult);
-          // 关键修复：即使失败也要添加类，以隐藏按钮
           messageEl.classList.add('has-reverse-check');
         }
       });
