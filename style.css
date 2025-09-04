@@ -45,13 +45,20 @@ body {
   margin-bottom: 5px;
 }
 
-select {
+select,
+.custom-select-trigger {
   background-color: #333;
   color: #e0e0e0;
   border: 1px solid #555;
   border-radius: 8px;
   padding: 8px;
   font-size: 0.9em;
+  height: 38px;
+  line-height: 22px; /* 统一行高，确保文本垂直居中 */
+  box-sizing: border-box; /* 确保 padding 不会增加总高度 */
+}
+
+select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -64,6 +71,13 @@ select {
 select:focus {
   outline: none;
   border-color: #007bff;
+}
+
+.custom-select-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* 聊天区域 */
@@ -163,7 +177,7 @@ textarea {
   background-color: #1a1a1a;
   color: #e0e0e0;
   resize: none;
-  font-size: 1.5em; /* 增加字体大小 */
+  font-size: 1.5em; /* 增大字体大小 */
   box-sizing: border-box;
 }
 
@@ -248,4 +262,104 @@ button:hover {
 
 button:active {
   background-color: #004085;
+}
+
+/* 自定义多选下拉菜单样式 */
+.custom-select-trigger {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.9em;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px; /* 统一高度 */
+}
+
+.custom-select-trigger::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid #e0e0e0;
+  border-right: 2px solid #e0e0e0;
+  transition: transform 0.2s ease;
+}
+
+.custom-select-trigger.open::after {
+  transform: translateY(-50%) rotate(-135deg);
+}
+
+.custom-select-options {
+  display: none;
+  position: absolute;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  width: calc(100% - 20px);
+  margin-top: 5px;
+  padding: 5px 0;
+}
+
+.custom-select-options.open {
+  display: block;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.custom-select-option:hover {
+  background-color: #444;
+}
+
+.custom-select-option input[type="checkbox"] {
+  margin-right: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #777;
+  border-radius: 4px;
+  background-color: #222;
+  position: relative;
+  cursor: pointer;
+}
+
+.custom-select-option input[type="checkbox"]:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.custom-select-option input[type="checkbox"]:checked::after {
+  content: '✔';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 10px;
+}
+
+.custom-select-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+.custom-select-option.disabled:hover {
+  background-color: transparent;
 }
