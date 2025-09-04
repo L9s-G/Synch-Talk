@@ -137,14 +137,15 @@ function createMessageBubble(text, className, originalFullText = null) {
 
   if (className === 'ai-message') {
     const checkBtn = document.createElement('button');
-    checkBtn.textContent = '校验';
     checkBtn.classList.add('reverse-check-btn');
     messageEl.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
+      // 如果结果已存在，不再重复调用，并直接返回
       if (messageEl.querySelector('.reverse-check-result')) {
-        messageEl.querySelector('.reverse-check-result').remove();
+        return;
       }
+      
       chrome.runtime.sendMessage({
         action: 'reverseCheck',
         textToTranslate: originalFullText || text
@@ -154,11 +155,15 @@ function createMessageBubble(text, className, originalFullText = null) {
           checkResult.classList.add('reverse-check-result');
           checkResult.textContent = `反向校验 (EN): ${response.text}`;
           messageEl.appendChild(checkResult);
+          // 关键修复：当结果成功时添加类
+          messageEl.classList.add('has-reverse-check');
         } else {
           const checkResult = document.createElement('div');
           checkResult.classList.add('reverse-check-result');
           checkResult.textContent = `反向校验失败。`;
           messageEl.appendChild(checkResult);
+          // 关键修复：即使失败也要添加类，以隐藏按钮
+          messageEl.classList.add('has-reverse-check');
         }
       });
     });
