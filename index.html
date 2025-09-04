@@ -7,8 +7,14 @@
 <body>
   <div class="container">
     <div class="header">
-      <select id="source-language"></select>
-      <select id="target-languages" multiple></select>
+      <div class="language-select">
+        <label for="source-language">源语言</label>
+        <select id="source-language"></select>
+      </div>
+      <div class="language-select">
+        <label for="target-languages">目标语言 (多选)</label>
+        <select id="target-languages" multiple></select>
+      </div>
     </div>
 
     <div class="chat-area" id="chat-area">
