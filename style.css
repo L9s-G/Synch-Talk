@@ -54,8 +54,8 @@ select,
   padding: 8px;
   font-size: 0.9em;
   height: 38px;
-  line-height: 22px; /* 统一行高，确保文本垂直居中 */
-  box-sizing: border-box; /* 确保 padding 不会增加总高度 */
+  line-height: 22px;
+  box-sizing: border-box;
 }
 
 select {
@@ -100,6 +100,8 @@ select:focus {
   max-width: 80%;
   word-wrap: break-word;
   position: relative;
+  /* 统一调整消息气泡字体大小 */
+  font-size: 1.1em;
 }
 
 .user-message {
@@ -116,29 +118,52 @@ select:focus {
   border-bottom-left-radius: 4px;
 }
 
+/* 校验按钮样式和定位 */
 .reverse-check-btn {
+  width: 20px; 
+  height: 20px; 
+  padding: 0;
+  
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background-color: rgba(0, 0, 0, 0.4);
-  color: white;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 50px;
+  bottom: -8px; 
+  right: -8px; 
+  
+  border-radius: 50%;
+  background-color: #555;
+  
+  text-indent: -9999px;
+  overflow: hidden;
+  
   cursor: pointer;
-  display: none;
+  border: none;
+  
   opacity: 0;
-  transition: opacity 0.2s ease;
+  visibility: hidden;
+  
+  transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+  
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transform: scale(0.8);
 }
 
-.message:hover .reverse-check-btn {
-  display: block;
+/* 鼠标悬停在 AI 消息气泡上时，显示按钮 */
+.ai-message:hover .reverse-check-btn {
   opacity: 1;
+  visibility: visible;
+  transform: scale(1);
 }
 
-.ai-message .reverse-check-btn {
-  right: -50px;
+/* 按钮的 hover 效果 */
+.reverse-check-btn:hover {
+  background-color: #007bff;
+}
+
+/* 当 AI 消息气泡有校验结果时，隐藏按钮 */
+.ai-message.has-reverse-check .reverse-check-btn {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .reverse-check-result {
@@ -161,13 +186,12 @@ select:focus {
   transition: border-color 0.2s ease;
 }
 
-/* 焦点反馈: 当输入框聚焦时，改变父容器的边框颜色 */
 .input-area:focus-within {
   border-color: #999;
 }
 
 textarea {
-  width: 100%; /* 宽度占满父容器 */
+  width: 100%;
   min-height: 60px;
   max-height: 120px;
   padding: 10px;
@@ -177,7 +201,7 @@ textarea {
   background-color: #1a1a1a;
   color: #e0e0e0;
   resize: none;
-  font-size: 1.5em; /* 增大字体大小 */
+  font-size: 1.5em;
   box-sizing: border-box;
 }
 
@@ -277,7 +301,7 @@ button:active {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 38px; /* 统一高度 */
+  height: 38px;
 }
 
 .custom-select-trigger::after {
