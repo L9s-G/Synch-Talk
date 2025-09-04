@@ -11,9 +11,13 @@
         <label for="source-language">源语言</label>
         <select id="source-language"></select>
       </div>
-      <div class="language-select">
-        <label for="target-languages">目标语言 (多选)</label>
-        <select id="target-languages" multiple></select>
+      <div class="language-select" id="target-language-select-container">
+        <label>目标语言 (多选)</label>
+        <div class="custom-select-trigger" id="target-languages-display">
+          请选择目标语言
+        </div>
+        <div class="custom-select-options" id="target-languages-options">
+          </div>
       </div>
     </div>
 
