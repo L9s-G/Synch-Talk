@@ -11,17 +11,44 @@ const languages = ['Chinese', 'English', 'Greek'];
 
 // 填充下拉菜单
 function populateLanguages() {
+  // 填充源语言下拉菜单
   languages.forEach(lang => {
     const option = document.createElement('option');
     option.value = lang;
     option.textContent = lang;
     sourceLangSelect.appendChild(option);
   });
-  // 目标语言多选，这里简化处理，可以后续添加
+
+  // 填充目标语言下拉菜单
+  languages.forEach(lang => {
+    const option = document.createElement('option');
+    option.value = lang;
+    option.textContent = lang;
+    targetLangSelect.appendChild(option);
+  });
 }
+
+// 禁用目标语言下拉菜单中的源语言选项
+function updateTargetLanguages() {
+  const selectedSourceLang = sourceLangSelect.value;
+  // 遍历所有目标语言选项
+  Array.from(targetLangSelect.options).forEach(option => {
+    if (option.value === selectedSourceLang) {
+      option.disabled = true; // 禁用源语言选项
+      option.style.color = '#aaa'; // 灰化显示
+    } else {
+      option.disabled = false;
+      option.style.color = '#000'; // 恢复正常颜色
+    }
+  });
+}
+
+// 监听源语言下拉菜单的变化
+sourceLangSelect.addEventListener('change', updateTargetLanguages);
 
 // 在页面加载时调用
 populateLanguages();
+updateTargetLanguages(); // 页面加载时也执行一次更新
 
 // 发送消息的函数
 sendBtn.addEventListener('click', () => {
@@ -50,5 +77,3 @@ sendBtn.addEventListener('click', () => {
   // 清空输入框
   userInputTextarea.value = '';
 });
-
-// 这里只是前端的骨架，真正调用AI的逻辑在background.js中
