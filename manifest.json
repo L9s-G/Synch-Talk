@@ -1,39 +1,23 @@
 {
-  // 扩展的清单文件版本，目前推荐使用 v3
   "manifest_version": 3,
-  
-  // 扩展的名称
   "name": "Synch-Talk",
-  
-  // 扩展的版本号
   "version": "1.0",
-  
-  // 扩展的简短描述
   "description": "An AI-powered Chrome side panel for fluent multilingual communication.",
-  
-  // 扩展的图标，需要准备一个128x128像素的PNG文件
   "icons": {
     "128": "icon.png"
   },
-  
-  // 扩展需要请求的权限
   "permissions": [
-    // 允许扩展在所有网站上使用，这对于读取页面内容并与之交互是必要的
-    "activeTab",
-    "scripting",
-    // 允许扩展与Chrome的AI服务进行通信
-    "declarativeNetRequest"
+    "activeTab",       // 允许访问当前激活的标签页
+    "scripting",       // 允许注入脚本到页面
+    "sidePanel"        // 【新增/确认】这是激活侧边栏的关键权限
   ],
-  
-  // 定义侧边栏（Side Panel）
+  "host_permissions": [
+    "<all_urls>"       // 【新增/确认】允许扩展程序在所有网址上运行（读取或更改数据），这是最宽松的，用于调试
+  ],
   "side_panel": {
     "default_path": "index.html"
   },
-  
-  // 扩展的后台服务，用于处理AI调用等后台任务
   "background": {
     "service_worker": "background.js"
-  },
-
-  "host_permissions": ["*://*/*"]
+  }
 }
