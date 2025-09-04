@@ -7,17 +7,21 @@
     "128": "icon.png"
   },
   "permissions": [
-    "activeTab",       // 允许访问当前激活的标签页
-    "scripting",       // 允许注入脚本到页面
-    "sidePanel"        // 【新增/确认】这是激活侧边栏的关键权限
+    "activeTab",
+    "scripting",
+    "sidePanel"
   ],
   "host_permissions": [
-    "<all_urls>"       // 【新增/确认】允许扩展程序在所有网址上运行（读取或更改数据），这是最宽松的，用于调试
+    "<all_urls>"
   ],
   "side_panel": {
     "default_path": "index.html"
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Synch-Talk"
+    /* IMPORTANT: No "default_popup" here when using sidePanel.open() */
   }
 }
