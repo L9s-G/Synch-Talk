@@ -1,73 +1,140 @@
 // 获取DOM元素
 const sourceLangSelect = document.getElementById('source-language');
-const targetLangSelect = document.getElementById('target-languages');
+const targetLangTrigger = document.getElementById('target-languages-display');
+const targetLangOptionsContainer = document.getElementById('target-languages-options');
+const targetLangContainer = document.getElementById('target-language-select-container');
 const chatArea = document.getElementById('chat-area');
 const userInputTextarea = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const tutorModeToggle = document.getElementById('tutor-mode-toggle');
 
 // 定义支持的语言
-const languages = ['Chinese', 'English', 'Greek']; // 我们最初设定的语言
+const languages = ['Chinese', 'English', 'Greek'];
 
-// 填充下拉菜单
+// 用于存储当前选中的目标语言
+let selectedTargetLanguages = [];
+
+// 填充源语言下拉菜单和自定义目标语言菜单
 function populateLanguages() {
   languages.forEach(lang => {
     const sourceOption = document.createElement('option');
     sourceOption.value = lang;
     sourceOption.textContent = lang;
     sourceLangSelect.appendChild(sourceOption);
-
-    const targetOption = document.createElement('option');
-    targetOption.value = lang;
-    targetOption.textContent = lang;
-    targetLangSelect.appendChild(targetOption);
   });
-  // 默认选中一些项，方便测试
-  sourceLangSelect.value = 'Chinese'; // 默认源语言
-  // 默认选中英文和希腊语作为目标语言
-  Array.from(targetLangSelect.options).forEach(option => {
-    if (option.value === 'English' || option.value === 'Greek') {
-      option.selected = true;
+  sourceLangSelect.value = 'Chinese';
+
+  targetLangOptionsContainer.innerHTML = '';
+  languages.forEach(lang => {
+    const optionDiv = document.createElement('div');
+    optionDiv.classList.add('custom-select-option');
+    optionDiv.setAttribute('data-value', lang);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `target-lang-${lang.toLowerCase()}`;
+    checkbox.value = lang;
+
+    const label = document.createElement('label');
+    label.htmlFor = `target-lang-${lang.toLowerCase()}`;
+    label.textContent = lang;
+
+    optionDiv.appendChild(checkbox);
+    optionDiv.appendChild(label);
+    targetLangOptionsContainer.appendChild(optionDiv);
+
+    if (lang === 'English' || lang === 'Greek') {
+      checkbox.checked = true;
+      selectedTargetLanguages.push(lang);
     }
-  });
-}
 
-// 禁用目标语言下拉菜单中的源语言选项，并处理默认选择
-function updateTargetLanguages() {
-  const selectedSourceLang = sourceLangSelect.value;
-  Array.from(targetLangSelect.options).forEach(option => {
-    if (option.value === selectedSourceLang) {
-      option.disabled = true; // 禁用源语言选项
-      option.style.color = '#aaa'; // 灰化显示
-      // 如果禁用的选项之前被选中了，则取消选中
-      if (option.selected) {
-        option.selected = false;
+    // 关键修改点：将事件监听器绑定到整个 optionDiv
+    optionDiv.addEventListener('click', (event) => {
+      // 如果点击的是label或checkbox本身，则让其默认行为处理
+      if (event.target === checkbox || event.target === label) {
+        if (optionDiv.classList.contains('disabled')) {
+          event.preventDefault();
+        }
+        return;
       }
+      
+      // 如果点击的是行背景，切换checkbox状态
+      if (!checkbox.disabled) {
+        checkbox.checked = !checkbox.checked;
+        updateSelectedTargetLanguages();
+      }
+    });
+  });
+  updateSelectedTargetLanguages();
+}
+
+// 更新显示已选中的目标语言
+function updateSelectedTargetLanguages() {
+  selectedTargetLanguages = Array.from(targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                               .map(checkbox => checkbox.value);
+  
+  if (selectedTargetLanguages.length === 0) {
+    targetLangTrigger.textContent = '请选择目标语言';
+  } else {
+    targetLangTrigger.textContent = selectedTargetLanguages.join(', ');
+  }
+}
+
+// 禁用或启用目标语言选项
+function updateTargetLanguagesAvailability() {
+  const selectedSourceLang = sourceLangSelect.value;
+  targetLangOptionsContainer.querySelectorAll('.custom-select-option').forEach(optionDiv => {
+    const checkbox = optionDiv.querySelector('input[type="checkbox"]');
+    if (checkbox.value === selectedSourceLang) {
+      optionDiv.classList.add('disabled');
+      checkbox.disabled = true;
+      checkbox.checked = false;
     } else {
-      option.disabled = false;
-      option.style.color = '#e0e0e0'; // 恢复正常颜色
+      optionDiv.classList.remove('disabled');
+      checkbox.disabled = false;
     }
   });
+  updateSelectedTargetLanguages();
 }
+
 
 // 监听源语言下拉菜单的变化
-sourceLangSelect.addEventListener('change', updateTargetLanguages);
+sourceLangSelect.addEventListener('change', updateTargetLanguagesAvailability);
+
+// 点击触发器显示/隐藏目标语言选项
+targetLangTrigger.addEventListener('click', (event) => {
+  event.stopPropagation();
+  targetLangOptionsContainer.classList.toggle('open');
+  targetLangTrigger.classList.toggle('open');
+  
+  // 定位下拉框到触发器下方
+  const rect = targetLangTrigger.getBoundingClientRect();
+  targetLangOptionsContainer.style.top = `${rect.bottom + window.scrollY}px`;
+  targetLangOptionsContainer.style.left = `${rect.left + window.scrollX}px`;
+  targetLangOptionsContainer.style.width = `${rect.width}px`;
+});
+
+// 点击文档其他地方隐藏目标语言选项
+document.addEventListener('click', (event) => {
+  if (!targetLangContainer.contains(event.target)) {
+    targetLangOptionsContainer.classList.remove('open');
+    targetLangTrigger.classList.remove('open');
+  }
+});
 
 // 在页面加载时调用
 populateLanguages();
-updateTargetLanguages(); // 页面加载时也执行一次更新
+updateTargetLanguagesAvailability();
 
 // 动态创建消息气泡并添加到聊天区域
 function createMessageBubble(text, className, originalFullText = null) {
   const messageEl = document.createElement('div');
   messageEl.classList.add('message', className);
 
-  // 创建一个段落来包含文本，方便后续添加按钮
   const textContent = document.createElement('p');
   textContent.textContent = text;
   messageEl.appendChild(textContent);
 
-  // 只有AI消息才需要反向校验按钮
   if (className === 'ai-message') {
     const checkBtn = document.createElement('button');
     checkBtn.textContent = '校验';
@@ -75,14 +142,12 @@ function createMessageBubble(text, className, originalFullText = null) {
     messageEl.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
-      // 避免重复校验，如果已经有结果了，直接显示
       if (messageEl.querySelector('.reverse-check-result')) {
-        messageEl.querySelector('.reverse-check-result').remove(); // 移除旧结果
+        messageEl.querySelector('.reverse-check-result').remove();
       }
-      // 向后台服务发送请求，进行反向校验
       chrome.runtime.sendMessage({
         action: 'reverseCheck',
-        textToTranslate: originalFullText || text // 使用原始完整文本进行校验
+        textToTranslate: originalFullText || text
       }, (response) => {
         if (response && response.text) {
           const checkResult = document.createElement('div');
@@ -103,17 +168,14 @@ function createMessageBubble(text, className, originalFullText = null) {
 
 // 显示 AI 翻译结果
 function displayAiResults(data, isTutorMode) {
-  // 如果是AI助教模式，先显示校正后的用户输入
   if (isTutorMode && data.mode === 'tutor' && data.corrected_text) {
     const correctedUserMessage = createMessageBubble(`AI 校正: ${data.corrected_text}`, 'ai-message', data.corrected_text);
     chatArea.appendChild(correctedUserMessage);
   }
   
-  // 显示翻译结果
   if (data.translations) {
     for (const lang in data.translations) {
       const translation = data.translations[lang];
-      // originalFullText 参数用于反向校验，确保校验的是整个翻译结果
       const translatedMessage = createMessageBubble(`${lang}: ${translation}`, 'ai-message', translation);
       chatArea.appendChild(translatedMessage);
     }
@@ -122,24 +184,21 @@ function displayAiResults(data, isTutorMode) {
     chatArea.appendChild(errorMessage);
   }
 
-  // 滚动到最新消息
   chatArea.scrollTop = chatArea.scrollHeight;
 }
 
 // 发送消息的函数
 sendBtn.addEventListener('click', () => {
-  const userInput = userInputTextarea.value.trim(); // 去除首尾空格
+  const userInput = userInputTextarea.value.trim();
   if (!userInput) return;
 
-  // 将用户输入显示到聊天区域
   const userMessage = createMessageBubble(userInput, 'user-message');
   chatArea.appendChild(userMessage);
 
   const sourceLang = sourceLangSelect.value;
-  const targetLangs = Array.from(targetLangSelect.selectedOptions).map(option => option.value);
+  const targetLangs = selectedTargetLanguages;
   const isTutorMode = tutorModeToggle.checked;
 
-  // 检查是否选择了目标语言
   if (targetLangs.length === 0) {
     const errorMessage = createMessageBubble("请至少选择一个目标语言。", 'ai-message');
     chatArea.appendChild(errorMessage);
@@ -148,7 +207,6 @@ sendBtn.addEventListener('click', () => {
     return;
   }
 
-  // 向后台服务发送消息，携带所有必要数据
   chrome.runtime.sendMessage({
     action: 'processInput',
     userInput: userInput,
@@ -156,25 +214,22 @@ sendBtn.addEventListener('click', () => {
     targetLanguages: targetLangs,
     isTutorMode: isTutorMode
   }, (response) => {
-    // 接收后台服务的响应，并更新UI
     if (response) {
       displayAiResults(response, isTutorMode);
     } else {
-      // 处理AI服务没有响应的情况
       const errorMessage = createMessageBubble("AI服务无响应，请稍后再试。", 'ai-message');
       chatArea.appendChild(errorMessage);
       chatArea.scrollTop = chatArea.scrollHeight;
     }
   });
 
-  // 清空输入框
   userInputTextarea.value = '';
 });
 
 // 监听 Shift + Enter 发送，Enter 换行
 userInputTextarea.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault(); // 阻止默认的换行行为
-    sendBtn.click(); // 触发发送按钮点击事件
+    e.preventDefault();
+    sendBtn.click();
   }
 });
