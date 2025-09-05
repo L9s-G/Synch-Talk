@@ -9,7 +9,7 @@ const sendBtn = document.getElementById('send-btn');
 const tutorModeToggle = document.getElementById('tutor-mode-toggle');
 
 // 定义支持的语言
-const languages = ['Chinese', 'English', 'Greek', 'Japanese'];
+const languages = ['Chinese', 'English', 'Greek' , 'French' ,  'German' , 'Japanese', 'Korean'];
 
 // 用于存储当前选中的目标语言
 let selectedTargetLanguages = [];
@@ -22,8 +22,7 @@ function populateLanguages() {
     sourceOption.textContent = lang;
     sourceLangSelect.appendChild(sourceOption);
   });
-  sourceLangSelect.value = 'Chinese';
-
+  
   targetLangOptionsContainer.innerHTML = '';
   languages.forEach(lang => {
     const optionDiv = document.createElement('div');
@@ -42,19 +41,18 @@ function populateLanguages() {
     optionDiv.appendChild(checkbox);
     optionDiv.appendChild(label);
     targetLangOptionsContainer.appendChild(optionDiv);
-
-    if (lang === 'English' || lang === 'Greek') {
-      checkbox.checked = true;
-      selectedTargetLanguages.push(lang);
-    }
   });
-  updateSelectedTargetLanguages();
+  
+  // 这部分逻辑将由 loadSettings() 处理，因此从这里移除
+  // updateSelectedTargetLanguages();
 }
 
 // 更新显示已选中的目标语言
 function updateSelectedTargetLanguages() {
   selectedTargetLanguages = Array.from(targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]:checked'))
                                .map(checkbox => checkbox.value);
+  //TODO：添加：保存新的selectedTargetLanguages[]
+  saveSettings();
   
   if (selectedTargetLanguages.length === 0) {
     targetLangTrigger.textContent = '请选择目标语言';
@@ -80,6 +78,38 @@ function updateTargetLanguagesAvailability() {
   updateSelectedTargetLanguages();
 }
 
+// --- 新增: 保存和加载设置 ---
+function saveSettings() {
+  const settings = {
+    sourceLanguage: sourceLangSelect.value,
+    targetLanguages: selectedTargetLanguages,
+    isTutorMode: tutorModeToggle.checked
+  };
+  chrome.storage.local.set({ settings });
+}
+
+function loadSettings() {
+  chrome.storage.local.get('settings', (data) => {
+    if (data.settings) {
+      const { sourceLanguage, targetLanguages, isTutorMode } = data.settings;
+      //TODO：修改：根据记录选中源语言
+      if (sourceLanguage) {
+        sourceLangSelect.value = sourceLanguage;
+      }
+      
+      //TODO：添加：根据记录的语言项更新selectedTargetLanguages[]
+      selectedTargetLanguages = targetLanguages || [];
+      tutorModeToggle.checked = isTutorMode;
+      const checkboxes = targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectedTargetLanguages.includes(checkbox.value);
+      });
+    }
+    // 确保加载后立即更新语言可用性
+    updateTargetLanguagesAvailability();
+  });
+}
+
 // --- 关键修复点: 统一处理语言选项的点击事件 ---
 targetLangOptionsContainer.addEventListener('click', (event) => {
   const clickedOption = event.target.closest('.custom-select-option');
@@ -94,7 +124,7 @@ targetLangOptionsContainer.addEventListener('click', (event) => {
         checkbox.checked = !checkbox.checked;
       }
       // 无论如何，都调用更新函数来确保UI与选中状态同步
-      updateSelectedTargetLanguages();
+      updateSelectedTargetLanguages();	  
     }
   }
 });
@@ -102,7 +132,14 @@ targetLangOptionsContainer.addEventListener('click', (event) => {
 
 
 // 监听源语言下拉菜单的变化
-sourceLangSelect.addEventListener('change', updateTargetLanguagesAvailability);
+sourceLangSelect.addEventListener('change', () => {
+  updateTargetLanguagesAvailability();
+  //TODO：添加：保存新的源语言
+  saveSettings();
+});
+
+// 监听助教模式开关的变化
+tutorModeToggle.addEventListener('change', saveSettings);
 
 // 点击触发器显示/隐藏目标语言选项
 targetLangTrigger.addEventListener('click', (event) => {
@@ -126,8 +163,10 @@ document.addEventListener('click', (event) => {
 });
 
 // 在页面加载时调用
-populateLanguages();
-updateTargetLanguagesAvailability();
+document.addEventListener('DOMContentLoaded', () => {
+  populateLanguages();
+  loadSettings();
+});
 
 // 动态创建消息气泡并添加到聊天区域
 function createMessageBubble(text, className, originalFullText = null) {
@@ -156,13 +195,13 @@ function createMessageBubble(text, className, originalFullText = null) {
         if (response && response.text) {
           const checkResult = document.createElement('div');
           checkResult.classList.add('reverse-check-result');
-          checkResult.textContent = `反向校验 (EN): ${response.text}`;
+          checkResult.textContent = `校验 (EN): ${response.text}`;
           messageEl.appendChild(checkResult);
           messageEl.classList.add('has-reverse-check');
         } else {
           const checkResult = document.createElement('div');
           checkResult.classList.add('reverse-check-result');
-          checkResult.textContent = `反向校验失败。`;
+          checkResult.textContent = `校验失败。`;
           messageEl.appendChild(checkResult);
           messageEl.classList.add('has-reverse-check');
         }
@@ -175,18 +214,18 @@ function createMessageBubble(text, className, originalFullText = null) {
 // 显示 AI 翻译结果
 function displayAiResults(data, isTutorMode) {
   if (isTutorMode && data.mode === 'tutor' && data.corrected_text) {
-    const correctedUserMessage = createMessageBubble(`AI 校正: ${data.corrected_text}`, 'ai-message', data.corrected_text);
+    const correctedUserMessage = createMessageBubble(`AI 校正:  ${data.corrected_text}`, 'ai-message', data.corrected_text);
     chatArea.appendChild(correctedUserMessage);
   }
   
   if (data.translations) {
     for (const lang in data.translations) {
       const translation = data.translations[lang];
-      const translatedMessage = createMessageBubble(`${lang}: ${translation}`, 'ai-message', translation);
+      const translatedMessage = createMessageBubble(`${lang}:  ${translation}`, 'ai-message', translation);
       chatArea.appendChild(translatedMessage);
     }
   } else if (data.error) {
-    const errorMessage = createMessageBubble(`错误: ${data.error}`, 'ai-message');
+    const errorMessage = createMessageBubble(`错误:  ${data.error}`, 'ai-message');
     chatArea.appendChild(errorMessage);
   }
 
