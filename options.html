@@ -1,74 +1,49 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>Synch-Talk 配置</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #1a1a1a;
-      color: #e0e0e0;
-    }
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    h2 {
-      color: #007bff;
-      border-bottom: 2px solid #333;
-      padding-bottom: 10px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #555;
-      border-radius: 8px;
-      background-color: #333;
-      color: #e0e0e0;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 15px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #status {
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      display: none;
-    }
-    .success {
-      background-color: #28a745;
-    }
-    .error {
-      background-color: #dc3545;
-    }
-  </style>
+  <title>Synch-Talk 选项</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h2>Gemini API 密钥配置</h2>
-    <p>请输入您的 Gemini API 密钥。密钥将安全地保存在本地，不会上传到任何服务器。</p>
-    <div class="form-group">
-      <label for="apiKey">API Key:</label>
-      <input type="text" id="apiKey" placeholder="在此处输入您的 API 密钥">
+  <div class="container options-container">
+    <h1>Synch-Talk 选项</h1>
+    <p>在此设置您的AI服务API密钥。</p>
+
+    <div class="input-group">
+      <label for="providerSelect">选择AI服务商:</label>
+      <select id="providerSelect">
+        <option value="gemini">Google Gemini</option>
+        <option value="openai">OpenAI (或兼容接口)</option>
+      </select>
     </div>
-    <button id="saveButton">保存密钥</button>
+
+    <div id="gemini-settings-group">
+      <div class="input-group">
+        <label for="geminiApiKey">Gemini API 密钥:</label>
+        <input type="text" id="geminiApiKey" placeholder="输入您的Gemini API密钥">
+      </div>
+    </div>
+
+    <div id="openai-settings-group" style="display: none;">
+      <div class="input-group">
+        <label for="openAiUrl">OpenAI-兼容 API 地址:</label>
+        <input type="text" id="openAiUrl" placeholder="例如: https://api.openai.com/v1/chat/completions">
+      </div>
+      <div class="input-group">
+        <label for="openAiApiKey">OpenAI-兼容 API 密钥:</label>
+        <input type="text" id="openAiApiKey" placeholder="输入您的OpenAI API密钥">
+      </div>
+      <div class="input-group">
+        <label for="openAiModel">模型名称:</label>
+        <input type="text" id="openAiModel" placeholder="例如: gpt-4o-mini">
+      </div>
+    </div>
+    
+    <div class="button-group">
+      <button id="testButton" class="test-btn">测试</button>
+      <button id="saveButton" class="save-btn disabled-btn" disabled>保存</button>
+    </div>
     <div id="status"></div>
   </div>
   <script src="options.js"></script>
