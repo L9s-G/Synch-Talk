@@ -1,280 +1,545 @@
-// 获取DOM元素
-const sourceLangSelect = document.getElementById('source-language');
-const targetLangTrigger = document.getElementById('target-languages-display');
-const targetLangOptionsContainer = document.getElementById('target-languages-options');
-const targetLangContainer = document.getElementById('target-language-select-container');
-const chatArea = document.getElementById('chat-area');
-const userInputTextarea = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
-const tutorModeToggle = document.getElementById('tutor-mode-toggle');
+/* 通用样式和深色背景主题 */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1a1a1a; /* 主背景色 */
+  color: #e0e0e0; /* 浅色字体 */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 
-// 定义支持的语言
-const languages = ['Chinese', 'English', 'Greek' , 'French' ,  'German' , 'Japanese', 'Korean'];
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
 
-// 用于存储当前选中的目标语言
-let selectedTargetLanguages = [];
+/* 头部语言选择区域 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
 
-// 填充源语言下拉菜单和自定义目标语言菜单
-function populateLanguages() {
-  languages.forEach(lang => {
-    const sourceOption = document.createElement('option');
-    sourceOption.value = lang;
-    sourceOption.textContent = lang;
-    sourceLangSelect.appendChild(sourceOption);
-  });
+.language-select {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-right: 10px;
+}
+
+.language-select:last-child {
+  margin-right: 0;
+}
+
+.language-select label {
+  font-size: 0.8em;
+  color: #bbb;
+  margin-bottom: 5px;
+}
+
+select,
+.custom-select-trigger {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.9em;
+  height: 38px;
+  line-height: 22px;
+  box-sizing: border-box;
+}
+
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23e0e0e0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%00-13%205.4L146.2%20268.3%2018.8%2075.8c-2.9-3.2-6.5-4.4-10.7-4.4C4.6%2071.4%200%2076%200%2082.2c0%204.4%201.7%207.9%204.4%2010.7l133.3%20133.3c3.2%203.2%206.5%204.4%2010.7%204.4s7.9-1.3%2010.7-4.4l133.3-133.3c2.9-2.9%204.4-6.5%204.4-10.7%200-6.2-4.6-10.7-10.7-10.7z%22%2F%3E%3C%2Fsvg%3E');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.custom-select-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 聊天区域 */
+.chat-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 消息样式 */
+.message {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  max-width: 80%;
+  word-wrap: break-word;
+  position: relative;
+  /* 统一调整消息气泡字体大小 */
+  font-size: 1.1em;
+}
+
+.user-message {
+  background-color: #007bff;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-message {
+  background-color: #333;
+  color: #e0e0e0;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+/* 校验按钮样式和定位 */
+.reverse-check-btn {
+  width: 20px; 
+  height: 20px; 
+  padding: 0;
   
-  targetLangOptionsContainer.innerHTML = '';
-  languages.forEach(lang => {
-    const optionDiv = document.createElement('div');
-    optionDiv.classList.add('custom-select-option');
-    optionDiv.setAttribute('data-value', lang);
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = `target-lang-${lang.toLowerCase()}`;
-    checkbox.value = lang;
-
-    const label = document.createElement('label');
-    label.htmlFor = `target-lang-${lang.toLowerCase()}`;
-    label.textContent = lang;
-
-    optionDiv.appendChild(checkbox);
-    optionDiv.appendChild(label);
-    targetLangOptionsContainer.appendChild(optionDiv);
-  });
+  position: absolute;
+  bottom: -8px; 
+  right: -8px; 
   
-  // 这部分逻辑将由 loadSettings() 处理，因此从这里移除
-  // updateSelectedTargetLanguages();
-}
-
-// 更新显示已选中的目标语言
-function updateSelectedTargetLanguages() {
-  selectedTargetLanguages = Array.from(targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                               .map(checkbox => checkbox.value);
-  //TODO：添加：保存新的selectedTargetLanguages[]
-  saveSettings();
+  border-radius: 50%;
+  background-color: #555;
   
-  if (selectedTargetLanguages.length === 0) {
-    targetLangTrigger.textContent = '请选择目标语言';
-  } else {
-    targetLangTrigger.textContent = selectedTargetLanguages.join(', ');
-  }
-}
-
-// 禁用或启用目标语言选项
-function updateTargetLanguagesAvailability() {
-  const selectedSourceLang = sourceLangSelect.value;
-  targetLangOptionsContainer.querySelectorAll('.custom-select-option').forEach(optionDiv => {
-    const checkbox = optionDiv.querySelector('input[type="checkbox"]');
-    if (checkbox.value === selectedSourceLang) {
-      optionDiv.classList.add('disabled');
-      checkbox.disabled = true;
-      checkbox.checked = false;
-    } else {
-      optionDiv.classList.remove('disabled');
-      checkbox.disabled = false;
-    }
-  });
-  updateSelectedTargetLanguages();
-}
-
-// --- 新增: 保存和加载设置 ---
-function saveSettings() {
-  const settings = {
-    sourceLanguage: sourceLangSelect.value,
-    targetLanguages: selectedTargetLanguages,
-    isTutorMode: tutorModeToggle.checked
-  };
-  chrome.storage.local.set({ settings });
-}
-
-function loadSettings() {
-  chrome.storage.local.get('settings', (data) => {
-    if (data.settings) {
-      const { sourceLanguage, targetLanguages, isTutorMode } = data.settings;
-      //TODO：修改：根据记录选中源语言
-      if (sourceLanguage) {
-        sourceLangSelect.value = sourceLanguage;
-      }
-      
-      //TODO：添加：根据记录的语言项更新selectedTargetLanguages[]
-      selectedTargetLanguages = targetLanguages || [];
-      tutorModeToggle.checked = isTutorMode;
-      const checkboxes = targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = selectedTargetLanguages.includes(checkbox.value);
-      });
-    }
-    // 确保加载后立即更新语言可用性
-    updateTargetLanguagesAvailability();
-  });
-}
-
-// --- 关键修复点: 统一处理语言选项的点击事件 ---
-targetLangOptionsContainer.addEventListener('click', (event) => {
-  const clickedOption = event.target.closest('.custom-select-option');
-  if (clickedOption) {
-    const checkbox = clickedOption.querySelector('input[type="checkbox"]');
-    // 如果复选框未被禁用，则切换其选中状态并更新UI
-    if (checkbox && !checkbox.disabled) {
-      // 检查点击的元素是否是label或checkbox本身
-      // 如果是，其默认行为会处理选中状态。我们只负责更新UI。
-      // 如果不是，我们手动切换选中状态，并更新UI。
-      if (event.target !== checkbox && event.target !== clickedOption.querySelector('label')) {
-        checkbox.checked = !checkbox.checked;
-      }
-      // 无论如何，都调用更新函数来确保UI与选中状态同步
-      updateSelectedTargetLanguages();	  
-    }
-  }
-});
-// ---------------------------------------------
-
-
-// 监听源语言下拉菜单的变化
-sourceLangSelect.addEventListener('change', () => {
-  updateTargetLanguagesAvailability();
-  //TODO：添加：保存新的源语言
-  saveSettings();
-});
-
-// 监听助教模式开关的变化
-tutorModeToggle.addEventListener('change', saveSettings);
-
-// 点击触发器显示/隐藏目标语言选项
-targetLangTrigger.addEventListener('click', (event) => {
-  event.stopPropagation();
-  targetLangOptionsContainer.classList.toggle('open');
-  targetLangTrigger.classList.toggle('open');
+  text-indent: -9999px;
+  overflow: hidden;
   
-  // 定位下拉框到触发器下方
-  const rect = targetLangTrigger.getBoundingClientRect();
-  targetLangOptionsContainer.style.top = `${rect.bottom + window.scrollY}px`;
-  targetLangOptionsContainer.style.left = `${rect.left + window.scrollX}px`;
-  targetLangOptionsContainer.style.width = `${rect.width}px`;
-});
-
-// 点击文档其他地方隐藏目标语言选项
-document.addEventListener('click', (event) => {
-  if (!targetLangContainer.contains(event.target)) {
-    targetLangOptionsContainer.classList.remove('open');
-    targetLangTrigger.classList.remove('open');
-  }
-});
-
-// 在页面加载时调用
-document.addEventListener('DOMContentLoaded', () => {
-  populateLanguages();
-  loadSettings();
-});
-
-// 动态创建消息气泡并添加到聊天区域
-function createMessageBubble(text, className, originalFullText = null) {
-  const messageEl = document.createElement('div');
-  messageEl.classList.add('message', className);
-
-  const textContent = document.createElement('p');
-  textContent.textContent = text;
-  messageEl.appendChild(textContent);
-
-  if (className === 'ai-message') {
-    const checkBtn = document.createElement('button');
-    checkBtn.classList.add('reverse-check-btn');
-    messageEl.appendChild(checkBtn);
-
-    checkBtn.addEventListener('click', () => {
-      // 如果结果已存在，不再重复调用，并直接返回
-      if (messageEl.querySelector('.reverse-check-result')) {
-        return;
-      }
-      
-      chrome.runtime.sendMessage({
-        action: 'reverseCheck',
-        textToTranslate: originalFullText || text
-      }, (response) => {
-        if (response && response.text) {
-          const checkResult = document.createElement('div');
-          checkResult.classList.add('reverse-check-result');
-          checkResult.textContent = `校验 (EN): ${response.text}`;
-          messageEl.appendChild(checkResult);
-          messageEl.classList.add('has-reverse-check');
-        } else {
-          const checkResult = document.createElement('div');
-          checkResult.classList.add('reverse-check-result');
-          checkResult.textContent = `校验失败。`;
-          messageEl.appendChild(checkResult);
-          messageEl.classList.add('has-reverse-check');
-        }
-      });
-    });
-  }
-  return messageEl;
-}
-
-// 显示 AI 翻译结果
-function displayAiResults(data, isTutorMode) {
-  if (isTutorMode && data.mode === 'tutor' && data.corrected_text) {
-    const correctedUserMessage = createMessageBubble(`AI 校正:  ${data.corrected_text}`, 'ai-message', data.corrected_text);
-    chatArea.appendChild(correctedUserMessage);
-  }
+  cursor: pointer;
+  border: none;
   
-  if (data.translations) {
-    for (const lang in data.translations) {
-      const translation = data.translations[lang];
-      const translatedMessage = createMessageBubble(`${lang}:  ${translation}`, 'ai-message', translation);
-      chatArea.appendChild(translatedMessage);
-    }
-  } else if (data.error) {
-    const errorMessage = createMessageBubble(`错误:  ${data.error}`, 'ai-message');
-    chatArea.appendChild(errorMessage);
-  }
-
-  chatArea.scrollTop = chatArea.scrollHeight;
+  opacity: 0;
+  visibility: hidden;
+  
+  transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  z-index: 10;
+  
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transform: scale(0.8);
 }
 
-// 发送消息的函数
-sendBtn.addEventListener('click', () => {
-  const userInput = userInputTextarea.value.trim();
-  if (!userInput) return;
+/* 鼠标悬停在 AI 消息气泡上时，显示按钮 */
+.ai-message:hover .reverse-check-btn {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
 
-  const userMessage = createMessageBubble(userInput, 'user-message');
-  chatArea.appendChild(userMessage);
+/* 按钮的 hover 效果 */
+.reverse-check-btn:hover {
+  background-color: #007bff;
+}
 
-  const sourceLang = sourceLangSelect.value;
-  const targetLangs = selectedTargetLanguages;
-  const isTutorMode = tutorModeToggle.checked;
+/* 当 AI 消息气泡有校验结果时，隐藏按钮 */
+.ai-message.has-reverse-check .reverse-check-btn {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 
-  if (targetLangs.length === 0) {
-    const errorMessage = createMessageBubble("请至少选择一个目标语言。", 'ai-message');
-    chatArea.appendChild(errorMessage);
-    userInputTextarea.value = '';
-    chatArea.scrollTop = chatArea.scrollHeight;
-    return;
-  }
+.reverse-check-result {
+  margin-top: 5px;
+  padding: 5px 8px;
+  background-color: #555;
+  border-radius: 8px;
+  font-size: 0.8em;
+  color: #ddd;
+}
 
-  chrome.runtime.sendMessage({
-    action: 'processInput',
-    userInput: userInput,
-    sourceLanguage: sourceLang,
-    targetLanguages: targetLangs,
-    isTutorMode: isTutorMode
-  }, (response) => {
-    if (response) {
-      displayAiResults(response, isTutorMode);
-    } else {
-      const errorMessage = createMessageBubble("AI服务无响应，请稍后再试。", 'ai-message');
-      chatArea.appendChild(errorMessage);
-      chatArea.scrollTop = chatArea.scrollHeight;
-    }
-  });
+/* 底部输入区域整合 */
+.input-area {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background-color: #1a1a1a;
+  border: 1px solid #555;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
 
-  userInputTextarea.value = '';
-});
+.input-area:focus-within {
+  border-color: #999;
+}
 
-// 监听 Shift + Enter 发送，Enter 换行
-userInputTextarea.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendBtn.click();
-  }
-});
+textarea {
+  width: 100%;
+  min-height: 60px;
+  max-height: 120px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  border: 1px solid #1a1a1a;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  resize: none;
+  font-size: 1.5em;
+  box-sizing: border-box;
+}
+
+textarea:focus {
+  outline: none;
+}
+
+/* 隐藏和美化滚动条 */
+/* 适用于 Chrome, Safari */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.controls input[type="checkbox"] {
+  margin-right: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #1a1a1a;
+  position: relative;
+  cursor: pointer;
+}
+
+.controls input[type="checkbox"]:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.controls input[type="checkbox"]:checked::after {
+  content: '✔';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 12px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button:active {
+  background-color: #004085;
+}
+
+/* 自定义多选下拉菜单样式 */
+.custom-select-trigger {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.9em;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+}
+
+.custom-select-trigger::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid #e0e0e0;
+  border-right: 2px solid #e0e0e0;
+  transition: transform 0.2s ease;
+}
+
+.custom-select-trigger.open::after {
+  transform: translateY(-50%) rotate(-135deg);
+}
+
+.custom-select-options {
+  display: none;
+  position: absolute;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  width: calc(100% - 20px);
+  margin-top: 5px;
+  padding: 5px 0;
+}
+
+.custom-select-options.open {
+  display: block;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.custom-select-option:hover {
+  background-color: #444;
+}
+
+.custom-select-option input[type="checkbox"] {
+  margin-right: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #777;
+  border-radius: 4px;
+  background-color: #222;
+  position: relative;
+  cursor: pointer;
+}
+
+.custom-select-option input[type="checkbox"]:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.custom-select-option input[type="checkbox"]:checked::after {
+  content: '✔';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 10px;
+}
+
+.custom-select-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+.custom-select-option.disabled:hover {
+  background-color: transparent;
+}
+
+/* 新增的选项页面样式 */
+.options-container {
+  max-width: calc(80% - 20px);
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #2a2a2a;
+}
+
+/* 统一输入框样式，使其更长 */
+.input-group input[type="text"] {
+  width: 95%;
+  min-width: 200px;
+  box-sizing: border-box;
+}
+
+/* 优化按钮样式，使其不占满宽度 */
+.save-btn {
+  width: calc(60%);
+  min-width: 120px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #555;
+  color: #e0e0e0;
+  border: 1px solid #777;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  margin-top: 15px;
+}
+
+.save-btn:hover {
+  background-color: #666;
+}
+
+/* 调整状态信息样式 */
+#status {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.success {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.error {
+  background-color: #f44336;
+  color: white;
+}
+
+/* 选项页面文字可读性优化 */
+.options-container h1 {
+  font-size: 2.0em;
+}
+
+.options-container p,
+.options-container label {
+  font-size: 1.2em;
+  line-height: 2.0;
+  display: block; /* 确保label独占一行，解决错位 */
+  margin-bottom: 5px; /* 增加label与输入框的间距 */
+  width: 100%; /* 确保label不会被压缩 */
+  box-sizing: border-box;
+}
+
+/* 统一输入框的字体大小 */
+.options-container input,
+.options-container select {
+  font-size: 1.1em;
+  line-height: 1.4;
+  margin-bottom: 15px; /* 增加输入框之间的间距 */
+}
+
+/* 新增: 让保存按钮居中 */
+.options-container button {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 新增: 让下拉选择框宽度加宽 */
+#providerSelect {
+  width: 60%;
+}
+
+/* 新增：按钮组布局 */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+/* 重新定义测试按钮样式为蓝色 */
+.test-btn {
+  width: auto;
+  min-width: 120px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #007bff; /* 默认蓝色 */
+  color: white;
+  border: 1px solid #007bff; /* 蓝色边框 */
+  border-radius: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.test-btn:hover {
+  background-color: #0056b3; /* 鼠标悬停时变深 */
+  border-color: #0056b3;
+}
+
+/* 调整保存按钮的居中样式，因为现在它在 flex 容器中 */
+.save-btn {
+  width: auto;
+  min-width: 120px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid #777;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin: 0; /* 移除原来的 margin */
+}
+
+/* 保存按钮默认禁用样式 (灰色) */
+.save-btn.disabled-btn {
+  background-color: #555;
+  border-color: #777;
+  color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+/* 保存按钮可用样式 (蓝色，与消息界面一致) */
+.save-btn.enabled-btn {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.custom-select-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #222;
+}
+
+.custom-select-option.disabled label,
+.custom-select-option.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
