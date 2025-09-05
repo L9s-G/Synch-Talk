@@ -387,3 +387,159 @@ button:active {
 .custom-select-option.disabled:hover {
   background-color: transparent;
 }
+
+/* 新增的选项页面样式 */
+.options-container {
+  max-width: calc(80% - 20px);
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #2a2a2a;
+}
+
+/* 统一输入框样式，使其更长 */
+.input-group input[type="text"] {
+  width: 95%;
+  min-width: 200px;
+  box-sizing: border-box;
+}
+
+/* 优化按钮样式，使其不占满宽度 */
+.save-btn {
+  width: calc(60%);
+  min-width: 120px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #555;
+  color: #e0e0e0;
+  border: 1px solid #777;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  margin-top: 15px;
+}
+
+.save-btn:hover {
+  background-color: #666;
+}
+
+/* 调整状态信息样式 */
+#status {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.success {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.error {
+  background-color: #f44336;
+  color: white;
+}
+
+/* 选项页面文字可读性优化 */
+.options-container h1 {
+  font-size: 2.0em;
+}
+
+.options-container p,
+.options-container label {
+  font-size: 1.2em;
+  line-height: 2.0;
+  display: block; /* 确保label独占一行，解决错位 */
+  margin-bottom: 5px; /* 增加label与输入框的间距 */
+  width: 100%; /* 确保label不会被压缩 */
+  box-sizing: border-box;
+}
+
+/* 统一输入框的字体大小 */
+.options-container input,
+.options-container select {
+  font-size: 1.1em;
+  line-height: 1.4;
+  margin-bottom: 15px; /* 增加输入框之间的间距 */
+}
+
+/* 新增: 让保存按钮居中 */
+.options-container button {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 新增: 让下拉选择框宽度加宽 */
+#providerSelect {
+  width: 60%;
+}
+
+/* 新增：按钮组布局 */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+/* 重新定义测试按钮样式为蓝色 */
+.test-btn {
+  width: auto;
+  min-width: 120px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #007bff; /* 默认蓝色 */
+  color: white;
+  border: 1px solid #007bff; /* 蓝色边框 */
+  border-radius: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.test-btn:hover {
+  background-color: #0056b3; /* 鼠标悬停时变深 */
+  border-color: #0056b3;
+}
+
+/* 调整保存按钮的居中样式，因为现在它在 flex 容器中 */
+.save-btn {
+  width: auto;
+  min-width: 120px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid #777;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin: 0; /* 移除原来的 margin */
+}
+
+/* 保存按钮默认禁用样式 (灰色) */
+.save-btn.disabled-btn {
+  background-color: #555;
+  border-color: #777;
+  color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+/* 保存按钮可用样式 (蓝色，与消息界面一致) */
+.save-btn.enabled-btn {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.custom-select-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #222;
+}
+
+.custom-select-option.disabled label,
+.custom-select-option.disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
