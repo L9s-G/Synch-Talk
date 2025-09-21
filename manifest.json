@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Synch-Talk",
-  "version": "2.0",
+  "version": "2.1",
   "description": "An AI-powered Chrome side panel for fluent multilingual communication.",
   "icons": {
     "128": "icon.png"
