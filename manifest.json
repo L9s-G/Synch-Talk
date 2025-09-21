@@ -2,9 +2,12 @@
   "manifest_version": 3,
   "name": "Synch-Talk",
   "version": "2.1",
-  "description": "An AI-powered Chrome side panel for fluent multilingual communication.",
+  "description": "Natural, Culturally-Aware AI Translator",
   "icons": {
-    "128": "icon.png"
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
   "permissions": [
     "activeTab",
@@ -22,7 +25,11 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Synch-Talk"
+    "default_title": "Synch-Talk",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
   },
   "options_page": "options.html"
 }
