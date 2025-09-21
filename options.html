@@ -2,47 +2,47 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Synch-Talk 选项</title>
+  <title>Synch-Talk Options</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container options-container">
-    <h1>Synch-Talk 选项</h1>
-    <p>在此设置您的AI服务API密钥。</p>
+    <h1>Synch-Talk Options</h1>
+    <p>Set your AI service API key here.</p>
 
     <div class="input-group">
-      <label for="providerSelect">选择AI服务商:</label>
+      <label for="providerSelect">Select AI Provider:</label>
       <select id="providerSelect">
         <option value="gemini">Google Gemini</option>
-        <option value="openai">OpenAI (或兼容接口)</option>
+        <option value="openai">OpenAI (or compatible API)</option>
       </select>
     </div>
 
     <div id="gemini-settings-group">
       <div class="input-group">
-        <label for="geminiApiKey">Gemini API 密钥:</label>
-        <input type="text" id="geminiApiKey" placeholder="输入您的Gemini API密钥">
+        <label for="geminiApiKey">Gemini API Key:</label>
+        <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API key">
       </div>
     </div>
 
     <div id="openai-settings-group" style="display: none;">
       <div class="input-group">
-        <label for="openAiUrl">OpenAI-兼容 API 地址:</label>
-        <input type="text" id="openAiUrl" placeholder="例如: https://api.openai.com/v1/chat/completions">
+        <label for="openAiUrl">OpenAI-Compatible API URL:</label>
+        <input type="text" id="openAiUrl" placeholder="e.g., https://api.openai.com/v1/chat/completions">
       </div>
       <div class="input-group">
-        <label for="openAiApiKey">OpenAI-兼容 API 密钥:</label>
-        <input type="text" id="openAiApiKey" placeholder="输入您的OpenAI API密钥">
+        <label for="openAiApiKey">OpenAI-Compatible API Key:</label>
+        <input type="text" id="openAiApiKey" placeholder="Enter your OpenAI API key">
       </div>
       <div class="input-group">
-        <label for="openAiModel">模型名称:</label>
-        <input type="text" id="openAiModel" placeholder="例如: gpt-4o-mini">
+        <label for="openAiModel">Model Name:</label>
+        <input type="text" id="openAiModel" placeholder="e.g., gpt-4o-mini">
       </div>
     </div>
     
     <div class="button-group">
-      <button id="testButton" class="test-btn">测试</button>
-      <button id="saveButton" class="save-btn disabled-btn" disabled>保存</button>
+      <button id="testButton" class="test-btn">Test</button>
+      <button id="saveButton" class="save-btn disabled-btn" disabled>Save</button>
     </div>
     <div id="status"></div>
   </div>
