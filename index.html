@@ -2,35 +2,36 @@
 <html>
 <head>
   <title>Synch-Talk</title>
-  <meta charset="UTF-8"> <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div class="language-select">
-        <label for="source-language">源语言</label>
+        <label for="source-language">Source Language</label>
         <select id="source-language"></select>
       </div>
       <div class="language-select" id="target-language-select-container">
-        <label>目标语言 (多选)</label>
+        <label>Target Languages (Multiple)</label>
         <div class="custom-select-trigger" id="target-languages-display">
-          请选择目标语言
+          Please select target languages
         </div>
         <div class="custom-select-options" id="target-languages-options">
-          </div>
+        </div>
       </div>
     </div>
 
     <div class="chat-area" id="chat-area">
-      </div>
+    </div>
 
     <div class="input-area">
       <textarea id="user-input" placeholder="Message Synch-Talk..."></textarea>
       <div class="controls">
         <label>
-          <input type="checkbox" id="tutor-mode-toggle"> AI 助教
+          <input type="checkbox" id="tutor-mode-toggle"> AI Tutor
         </label>
-        <button id="send-btn">发送</button>
+        <button id="send-btn">Send</button>
       </div>
     </div>
   </div>
