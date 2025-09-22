@@ -1,11 +1,11 @@
 // background.js
 
-// 核心提示词构建函数
+// Core prompt construction function
 function buildDynamicPrompt(userInput, sourceLanguage, targetLanguages, isTutorMode, isGemini) {
   const targetLanguagesString = targetLanguages.join(', ');
   const translationsExample = targetLanguages.map(lang => `"${lang}": "${lang} Translation."`).join(',\n      ');
 
-  // 如果是Gemini，则使用JSON提示词
+  // If Gemini, use JSON prompt
   if (isGemini) {
     const safeUserInput = JSON.stringify(userInput);
     let prompt = `Translate the following text based on the given instructions.
@@ -43,7 +43,7 @@ function buildDynamicPrompt(userInput, sourceLanguage, targetLanguages, isTutorM
     return prompt;
   }
   
-  // 如果是OpenAI，则使用更简洁的提示词
+  // If OpenAI, use a simpler prompt
   else {
     const promptPrefix = `You are an expert translator.
     You will receive user input, a source language, and a list of target languages.
@@ -70,37 +70,37 @@ function buildDynamicPrompt(userInput, sourceLanguage, targetLanguages, isTutorM
   }
 }
 
-// 反向校验提示词构建函数
+// Reverse check prompt construction function
 function buildReverseCheckPrompt(textToTranslate) {
   const safeTextToTranslate = JSON.stringify(textToTranslate);
   return `Translate the following text into conversational English, and provide ONLY the translation without any extra text.
   Text: ${safeTextToTranslate}`;
 }
 
-// 辅助函数：统一处理模型返回的格式，移除markdown和多余逗号
+// Helper function: Standardize handling of model response format, removing markdown and extra commas
 function cleanApiResponse(text) {
-  // 移除 markdown 代码块标记
+  // Remove markdown code block markers
   const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
   let cleanedText = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim();
 
-  // 移除多余的逗号
+  // Remove extra commas
   cleanedText = cleanedText.replace(/,(\s*[}\]])/g, '$1');
 
-  // 如果是JSON，尝试解析
+  // If JSON, attempt to parse
   try {
     const parsed = JSON.parse(cleanedText);
     if (parsed.text) {
       return parsed.text.trim();
     }
-    // 否则返回原始文本
+    // Otherwise return the raw text
     return cleanedText;
   } catch (e) {
-    // 不是JSON，直接返回
+    // Not JSON, return directly
     return cleanedText;
   }
 }
 
-// 辅助函数：统一处理API调用
+// Helper function: Standardize API call handling
 async function makeApiCall(provider, endpoint, headers, body) {
   try {
     const response = await fetch(endpoint, {
@@ -120,13 +120,13 @@ async function makeApiCall(provider, endpoint, headers, body) {
 
   } catch (error) {
     console.error(`API call to ${provider} failed:`, error);
-    return { error: `无法连接到 ${provider} API: ${error.message}` };
+    return { error: `Unable to connect to ${provider} API: ${error.message}` };
   }
 }
 
-// ---- API 核心功能函数 ----
+// ---- API Core Functionality ----
 
-// 处理翻译和助教模式
+// Process translation and tutor mode
 async function processAiInput(userInput, sourceLanguage, targetLanguages, isTutorMode) {
   const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
   const provider = settings.aiProvider || 'gemini';
@@ -137,7 +137,7 @@ async function processAiInput(userInput, sourceLanguage, targetLanguages, isTuto
 
   if (provider === 'gemini') {
     if (!settings.geminiApiKey) {
-      return { error: '请在选项页面设置您的 Gemini API 密钥。' };
+      return { error: 'Please set your Gemini API key in the options page.' };
     }
     prompt = buildDynamicPrompt(userInput, sourceLanguage, targetLanguages, isTutorMode, true);
     const body = { contents: [{ parts: [{ text: prompt }] }] };
@@ -151,13 +151,13 @@ async function processAiInput(userInput, sourceLanguage, targetLanguages, isTuto
     try {
       responseData = JSON.parse(cleanedContent);
     } catch (e) {
-      return { error: `Gemini API 返回的JSON格式无效: ${e.message}` };
+      return { error: `Invalid JSON format returned by Gemini API: ${e.message}` };
     }
 
   } else if (provider === 'openai') {
     const { openAiUrl, openAiApiKey, openAiModel } = settings;
     if (!openAiUrl || !openAiApiKey || !openAiModel) {
-      return { error: '请在选项页面设置您的 OpenAI-兼容 API 地址、密钥和模型。' };
+      return { error: 'Please set your OpenAI-compatible API URL, key, and model in the options page.' };
     }
     prompt = buildDynamicPrompt(userInput, sourceLanguage, targetLanguages, isTutorMode, false);
     const body = {
@@ -174,16 +174,16 @@ async function processAiInput(userInput, sourceLanguage, targetLanguages, isTuto
     try {
       responseData = JSON.parse(cleanedContent);
     } catch (e) {
-      return { error: `OpenAI API 返回的JSON格式无效: ${e.message}` };
+      return { error: `Invalid JSON format returned by OpenAI API: ${e.message}` };
     }
 
   } else {
-    return { error: '未知的AI服务提供商。' };
+    return { error: 'Unknown AI service provider.' };
   }
   return responseData;
 }
 
-// 反向校验
+// Reverse check
 async function performReverseCheck(textToTranslate) {
   const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
   const provider = settings.aiProvider || 'gemini';
@@ -194,7 +194,7 @@ async function performReverseCheck(textToTranslate) {
 
   if (provider === 'gemini') {
     if (!settings.geminiApiKey) {
-      return { error: '请在选项页面设置您的 Gemini API 密钥以使用反向校验功能。' };
+      return { error: 'Please set your Gemini API key in the options page to use the reverse check function.' };
     }
     const body = { contents: [{ parts: [{ text: prompt }] }] };
     const headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.geminiApiKey };
@@ -206,7 +206,7 @@ async function performReverseCheck(textToTranslate) {
   } else if (provider === 'openai') {
     const { openAiUrl, openAiApiKey, openAiModel } = settings;
     if (!openAiUrl || !openAiApiKey || !openAiModel) {
-      return { error: '请在选项页面设置您的 OpenAI-兼容 API 以使用反向校验功能。' };
+      return { error: 'Please set your OpenAI-compatible API to use the reverse check function.' };
     }
     const body = { model: openAiModel, messages: [{ role: "user", content: prompt }] };
     const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` };
@@ -215,21 +215,21 @@ async function performReverseCheck(textToTranslate) {
     content = apiResponse.choices[0].message.content;
 
   } else {
-    return { error: '未知的AI服务提供商。' };
+    return { error: 'Unknown AI service provider.' };
   }
   
-  // 对返回结果进行清理，确保是纯文本
+  // Clean the response to ensure it is plain text
   const cleanedText = cleanApiResponse(content);
   
   return { text: cleanedText.trim() };
 }
 
-// 测试API
+// Test API
 async function testApi(provider, settings) {
   let prompt, body, headers, endpoint;
 
   if (provider === 'gemini') {
-    if (!settings.apiKey) return { success: false, error: '请输入 Gemini API 密钥。' };
+    if (!settings.apiKey) return { success: false, error: 'Please enter your Gemini API key.' };
     prompt = "Test API connectivity. Respond with a single word: 'OK'.";
     body = { contents: [{ parts: [{ text: prompt }] }] };
     headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.apiKey };
@@ -237,7 +237,7 @@ async function testApi(provider, settings) {
     
   } else if (provider === 'openai') {
     if (!settings.url || !settings.apiKey || !settings.model) {
-      return { success: false, error: '请填写所有 OpenAI-兼容接口设置。' };
+      return { success: false, error: 'Please fill in all OpenAI-compatible interface settings.' };
     }
     prompt = "Test API connectivity. Respond with a single word: 'OK'.";
     body = { model: settings.model, messages: [{ role: "user", content: prompt }] };
@@ -245,7 +245,7 @@ async function testApi(provider, settings) {
     endpoint = settings.url;
     
   } else {
-    return { success: false, error: '不支持测试此服务商。' };
+    return { success: false, error: 'Testing this provider is not supported.' };
   }
 
   const apiResponse = await makeApiCall(provider, endpoint, headers, body);
@@ -260,31 +260,31 @@ async function testApi(provider, settings) {
     content = apiResponse.choices[0].message.content;
   }
   
-  // 对测试结果进行清理，以确保逻辑正常
+  // Clean the test result to ensure proper logic
   const cleanedContent = cleanApiResponse(content);
   
   if (cleanedContent && cleanedContent.trim().toLowerCase().includes('ok')) {
-    return { success: true, message: 'API配置成功！' };
+    return { success: true, message: 'API configuration successful!' };
   } else {
-    return { success: false, error: `API返回非预期响应: ${cleanedContent}` };
+    return { success: false, error: `API returned unexpected response: ${cleanedContent}` };
   }
 }
 
-// ---- Chrome 扩展程序事件监听器 ----
+// ---- Chrome Extension Event Listeners ----
 
-// 在扩展程序安装或更新时设置侧边栏的行为
+// Set sidebar behavior on extension install or update
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setOptions({
     enabled: true
   });
 });
 
-// 监听工具栏图标点击事件
+// Listen for toolbar icon click events
 chrome.action.onClicked.addListener(async (tab) => {
   await chrome.sidePanel.open({ tabId: tab.id });
 });
 
-// 处理来自popup.js和options.js的请求
+// Handle requests from popup.js and options.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'processInput') {
     const { userInput, sourceLanguage, targetLanguages, isTutorMode } = request;
