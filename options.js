@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveButton = document.getElementById('saveButton');
   const statusDiv = document.getElementById('status');
 
-  // 控制保存按钮的状态（可用/禁用）
+  // Control the state of the save button (enabled/disabled)
   function updateSaveButtonState(isEnabled) {
     if (isEnabled) {
       saveButton.disabled = false;
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 根据用户选择的服务商显示或隐藏相应的输入框和按钮状态
+  // Show or hide the corresponding input fields and button state based on the selected provider
   function updateUI() {
     if (providerSelect.value === 'gemini') {
       geminiSettingsGroup.style.display = 'block';
@@ -32,18 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiSettingsGroup.style.display = 'none';
       openAiSettingsGroup.style.display = 'block';
     }
-    // 切换服务商时，都默认禁用保存按钮
+    // Disable the save button by default when switching providers
     updateSaveButtonState(false);
   }
 
-  // 页面加载时，从存储中加载已保存的设置
+  // Load saved settings from storage when the page loads
   chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'openAiUrl', 'openAiApiKey', 'openAiModel'], (data) => {
     if (data.aiProvider) {
       providerSelect.value = data.aiProvider;
     }
     if (data.geminiApiKey) {
       geminiApiKeyInput.value = data.geminiApiKey;
-      // 如果已保存密钥，则默认启用保存按钮
+      // If a key is already saved, enable the save button by default
       if (data.aiProvider === 'gemini' && data.geminiApiKey) {
         updateSaveButtonState(true);
       }
@@ -60,15 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUI();
   });
 
-  // 监听服务商选择下拉菜单的变化
+  // Listen for changes in the provider selection dropdown
   providerSelect.addEventListener('change', updateUI);
 
-  // 监听输入框的变化，任何更改都会禁用保存按钮
+  // Listen for changes in input fields; any change disables the save button
   [geminiApiKeyInput, openAiUrlInput, openAiApiKeyInput, openAiModelInput].forEach(input => {
     input.addEventListener('input', () => updateSaveButtonState(false));
   });
 
-  // 测试按钮事件监听器
+  // Test button event listener
   testButton.addEventListener('click', () => {
     const provider = providerSelect.value;
     let requestData = { action: 'testApi', provider: provider };
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const apiKey = geminiApiKeyInput.value.trim();
       if (!apiKey) {
         isValid = false;
-        statusDiv.textContent = '请输入 Gemini API 密钥。';
+        statusDiv.textContent = 'Please enter your Gemini API key.';
       }
       requestData.apiKey = apiKey;
     } else if (provider === 'openai') {
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const model = openAiModelInput.value.trim();
       if (!url || !apiKey || !model) {
         isValid = false;
-        statusDiv.textContent = '请填写所有 OpenAI-兼容接口设置。';
+        statusDiv.textContent = 'Please fill in all OpenAI-compatible interface settings.';
       }
       requestData.url = url;
       requestData.apiKey = apiKey;
@@ -101,19 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    statusDiv.textContent = '正在测试API配置...';
+    statusDiv.textContent = 'Testing API configuration...';
     statusDiv.classList.remove('error', 'success');
     statusDiv.style.display = 'block';
     updateSaveButtonState(false);
 
     chrome.runtime.sendMessage(requestData, (response) => {
       if (response && response.success) {
-        statusDiv.textContent = 'API配置成功！';
+        statusDiv.textContent = 'API configuration successful!';
         statusDiv.classList.remove('error');
         statusDiv.classList.add('success');
-        updateSaveButtonState(true); // 测试成功后启用保存按钮
+        updateSaveButtonState(true); // Enable save button after successful test
       } else {
-        statusDiv.textContent = `API配置失败: ${response.error || '未知错误'}`;
+        statusDiv.textContent = `API configuration failed: ${response.error || 'Unknown error'}`;
         statusDiv.classList.remove('success');
         statusDiv.classList.add('error');
         updateSaveButtonState(false);
@@ -121,9 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 保存按钮事件监听器
+  // Save button event listener
   saveButton.addEventListener('click', () => {
-    if (saveButton.disabled) return; // 双重检查，防止未测试直接保存
+    if (saveButton.disabled) return; // Double-check to prevent saving without testing
 
     const provider = providerSelect.value;
     const settingsToSave = { aiProvider: provider };
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     chrome.storage.local.set(settingsToSave, () => {
-      statusDiv.textContent = '设置保存成功！';
+      statusDiv.textContent = 'Settings saved successfully!';
       statusDiv.classList.remove('error');
       statusDiv.classList.add('success');
       statusDiv.style.display = 'block';
