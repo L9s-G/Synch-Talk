@@ -1,4 +1,4 @@
-// 获取DOM元素
+// Get DOM elements
 const sourceLangSelect = document.getElementById('source-language');
 const targetLangTrigger = document.getElementById('target-languages-display');
 const targetLangOptionsContainer = document.getElementById('target-languages-options');
@@ -8,13 +8,13 @@ const userInputTextarea = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
 const tutorModeToggle = document.getElementById('tutor-mode-toggle');
 
-// 定义支持的语言
+// Define supported languages
 const languages = ['Chinese', 'English', 'Greek' , 'French' ,  'German' , 'Japanese', 'Korean'];
 
-// 用于存储当前选中的目标语言
+// Store currently selected target languages
 let selectedTargetLanguages = [];
 
-// 填充源语言下拉菜单和自定义目标语言菜单
+// Populate source language dropdown and custom target language menu
 function populateLanguages() {
   languages.forEach(lang => {
     const sourceOption = document.createElement('option');
@@ -43,25 +43,25 @@ function populateLanguages() {
     targetLangOptionsContainer.appendChild(optionDiv);
   });
   
-  // 这部分逻辑将由 loadSettings() 处理，因此从这里移除
+  // This logic will be handled by loadSettings(), so remove it from here
   // updateSelectedTargetLanguages();
 }
 
-// 更新显示已选中的目标语言
+// Update display of selected target languages
 function updateSelectedTargetLanguages() {
   selectedTargetLanguages = Array.from(targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]:checked'))
                                .map(checkbox => checkbox.value);
-  //TODO：添加：保存新的selectedTargetLanguages[]
+  //TODO: Add: Save new selectedTargetLanguages[]
   saveSettings();
   
   if (selectedTargetLanguages.length === 0) {
-    targetLangTrigger.textContent = '请选择目标语言';
+    targetLangTrigger.textContent = 'Please select target languages';
   } else {
     targetLangTrigger.textContent = selectedTargetLanguages.join(', ');
   }
 }
 
-// 禁用或启用目标语言选项
+// Enable or disable target language options
 function updateTargetLanguagesAvailability() {
   const selectedSourceLang = sourceLangSelect.value;
   targetLangOptionsContainer.querySelectorAll('.custom-select-option').forEach(optionDiv => {
@@ -78,7 +78,7 @@ function updateTargetLanguagesAvailability() {
   updateSelectedTargetLanguages();
 }
 
-// --- 新增: 保存和加载设置 ---
+// --- New: Save and load settings ---
 function saveSettings() {
   const settings = {
     sourceLanguage: sourceLangSelect.value,
@@ -92,12 +92,12 @@ function loadSettings() {
   chrome.storage.local.get('settings', (data) => {
     if (data.settings) {
       const { sourceLanguage, targetLanguages, isTutorMode } = data.settings;
-      //TODO：修改：根据记录选中源语言
+      //TODO: Modify: Select source language based on record
       if (sourceLanguage) {
         sourceLangSelect.value = sourceLanguage;
       }
       
-      //TODO：添加：根据记录的语言项更新selectedTargetLanguages[]
+      //TODO: Add: Update selectedTargetLanguages[] based on recorded languages
       selectedTargetLanguages = targetLanguages || [];
       tutorModeToggle.checked = isTutorMode;
       const checkboxes = targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]');
@@ -105,56 +105,56 @@ function loadSettings() {
         checkbox.checked = selectedTargetLanguages.includes(checkbox.value);
       });
     }
-    // 确保加载后立即更新语言可用性
+    // Ensure language availability is updated immediately after loading
     updateTargetLanguagesAvailability();
   });
 }
 
-// --- 关键修复点: 统一处理语言选项的点击事件 ---
+// --- Critical fix: Unified handling of language option click events ---
 targetLangOptionsContainer.addEventListener('click', (event) => {
   const clickedOption = event.target.closest('.custom-select-option');
   if (clickedOption) {
     const checkbox = clickedOption.querySelector('input[type="checkbox"]');
-    // 如果复选框未被禁用，则切换其选中状态并更新UI
+    // If the checkbox is not disabled, toggle its checked state and update UI
     if (checkbox && !checkbox.disabled) {
-      // 检查点击的元素是否是label或checkbox本身
-      // 如果是，其默认行为会处理选中状态。我们只负责更新UI。
-      // 如果不是，我们手动切换选中状态，并更新UI。
+      // Check if the clicked element is the checkbox or its label
+      // If it is, the default behavior handles the checked state. We only update the UI.
+      // If not, we manually toggle the checked state and update the UI.
       if (event.target !== checkbox && event.target !== clickedOption.querySelector('label')) {
         checkbox.checked = !checkbox.checked;
       }
-      // 无论如何，都调用更新函数来确保UI与选中状态同步
+      // In any case, call the update function to ensure UI syncs with checked state
       updateSelectedTargetLanguages();	  
     }
   }
 });
 // ---------------------------------------------
 
-
-// 监听源语言下拉菜单的变化
+// Listen for changes in the source language dropdown
+									   
 sourceLangSelect.addEventListener('change', () => {
   updateTargetLanguagesAvailability();
-  //TODO：添加：保存新的源语言
+  //TODO: Add: Save new source language
   saveSettings();
 });
 
-// 监听助教模式开关的变化
+// Listen for changes in the tutor mode toggle
 tutorModeToggle.addEventListener('change', saveSettings);
 
-// 点击触发器显示/隐藏目标语言选项
+// Show/hide target language options on trigger click
 targetLangTrigger.addEventListener('click', (event) => {
   event.stopPropagation();
   targetLangOptionsContainer.classList.toggle('open');
   targetLangTrigger.classList.toggle('open');
   
-  // 定位下拉框到触发器下方
+  // Position the dropdown below the trigger
   const rect = targetLangTrigger.getBoundingClientRect();
   targetLangOptionsContainer.style.top = `${rect.bottom + window.scrollY}px`;
   targetLangOptionsContainer.style.left = `${rect.left + window.scrollX}px`;
   targetLangOptionsContainer.style.width = `${rect.width}px`;
 });
 
-// 点击文档其他地方隐藏目标语言选项
+// Hide target language options when clicking elsewhere in the document
 document.addEventListener('click', (event) => {
   if (!targetLangContainer.contains(event.target)) {
     targetLangOptionsContainer.classList.remove('open');
@@ -162,13 +162,13 @@ document.addEventListener('click', (event) => {
   }
 });
 
-// 在页面加载时调用
+// Call on page load
 document.addEventListener('DOMContentLoaded', () => {
   populateLanguages();
   loadSettings();
 });
 
-// 动态创建消息气泡并添加到聊天区域
+// Dynamically create message bubble and add to chat area
 function createMessageBubble(text, className, originalFullText = null) {
   const messageEl = document.createElement('div');
   messageEl.classList.add('message', className);
@@ -183,7 +183,7 @@ function createMessageBubble(text, className, originalFullText = null) {
     messageEl.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
-      // 如果结果已存在，不再重复调用，并直接返回
+      // If the result already exists, do not call again and return directly
       if (messageEl.querySelector('.reverse-check-result')) {
         return;
       }
@@ -195,13 +195,13 @@ function createMessageBubble(text, className, originalFullText = null) {
         if (response && response.text) {
           const checkResult = document.createElement('div');
           checkResult.classList.add('reverse-check-result');
-          checkResult.textContent = `校验 (EN): ${response.text}`;
+          checkResult.textContent = `Verify (EN): ${response.text}`;
           messageEl.appendChild(checkResult);
           messageEl.classList.add('has-reverse-check');
         } else {
           const checkResult = document.createElement('div');
           checkResult.classList.add('reverse-check-result');
-          checkResult.textContent = `校验失败。`;
+          checkResult.textContent = `Verify failed.`;
           messageEl.appendChild(checkResult);
           messageEl.classList.add('has-reverse-check');
         }
@@ -211,28 +211,28 @@ function createMessageBubble(text, className, originalFullText = null) {
   return messageEl;
 }
 
-// 显示 AI 翻译结果
+// Display AI translation results
 function displayAiResults(data, isTutorMode) {
   if (isTutorMode && data.mode === 'tutor' && data.corrected_text) {
-    const correctedUserMessage = createMessageBubble(`AI 校正:  ${data.corrected_text}`, 'ai-message', data.corrected_text);
+    const correctedUserMessage = createMessageBubble(`AI Tutor: ${data.corrected_text}`, 'ai-message', data.corrected_text);
     chatArea.appendChild(correctedUserMessage);
   }
   
   if (data.translations) {
     for (const lang in data.translations) {
       const translation = data.translations[lang];
-      const translatedMessage = createMessageBubble(`${lang}:  ${translation}`, 'ai-message', translation);
+      const translatedMessage = createMessageBubble(`${lang}: ${translation}`, 'ai-message', translation);
       chatArea.appendChild(translatedMessage);
     }
   } else if (data.error) {
-    const errorMessage = createMessageBubble(`错误:  ${data.error}`, 'ai-message');
+    const errorMessage = createMessageBubble(`Error: ${data.error}`, 'ai-message');
     chatArea.appendChild(errorMessage);
   }
 
   scrollChatToBottom();
 }
 
-// 发送消息的函数
+// Send message function
 sendBtn.addEventListener('click', () => {
   const userInput = userInputTextarea.value.trim();
   if (!userInput) return;
@@ -246,7 +246,7 @@ sendBtn.addEventListener('click', () => {
   const isTutorMode = tutorModeToggle.checked;
 
   if (targetLangs.length === 0) {
-    const errorMessage = createMessageBubble("请至少选择一个目标语言。", 'ai-message');
+    const errorMessage = createMessageBubble("Please select at least one target language.", 'ai-message');
     chatArea.appendChild(errorMessage);
     userInputTextarea.value = '';
     scrollChatToBottom();
@@ -263,7 +263,7 @@ sendBtn.addEventListener('click', () => {
     if (response) {
       displayAiResults(response, isTutorMode);
     } else {
-      const errorMessage = createMessageBubble("AI服务无响应，请稍后再试。", 'ai-message');
+      const errorMessage = createMessageBubble("AI service did not respond, please try again later.", 'ai-message');
       chatArea.appendChild(errorMessage);
       scrollChatToBottom();
     }
@@ -272,7 +272,7 @@ sendBtn.addEventListener('click', () => {
   userInputTextarea.value = '';
 });
 
-// 监听 Ctrl + Enter 发送，Enter 换行
+// Listen for Ctrl + Enter to send, Enter for newline
 userInputTextarea.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.ctrlKey) {
     e.preventDefault();
@@ -280,7 +280,7 @@ userInputTextarea.addEventListener('keydown', (e) => {
   }
 });
 
-// 对话列表滚动效果
+// Chat list scroll effect
 function scrollChatToBottom() {
   chatArea.scrollTo({
     top: chatArea.scrollHeight,
