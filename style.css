@@ -1,31 +1,41 @@
 /* 通用样式和深色背景主题 */
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #1a1a1a; /* 主背景色 */
-  color: #e0e0e0; /* 浅色字体 */
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  font-family: "Noto Sans", "Noto Sans Greek", "Noto Sans SC", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
   overflow: hidden;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   width: 100%;
-  padding: 10px;
   box-sizing: border-box;
+  position: relative;
 }
 
 /* 头部语言选择区域 */
 .header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
+  padding: 10px;
+  background-color: rgba(26, 26, 26, 0.75);
+  z-index: 10;
+  transition: transform 0.3s ease-in-out;
+  border-bottom: 1px solid #333;
+}
+
+.header-hidden {
+  transform: translateY(-100%);
 }
 
 .language-select {
@@ -84,10 +94,9 @@ select:focus {
 .chat-area {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 80px 10px 150px 10px;
+  /* 预留顶部和底部空间 */
   background-color: #1a1a1a;
-  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
 }
@@ -100,7 +109,6 @@ select:focus {
   max-width: 80%;
   word-wrap: break-word;
   position: relative;
-  /* 统一调整消息气泡字体大小 */
   font-size: 1.1em;
 }
 
@@ -120,29 +128,22 @@ select:focus {
 
 /* 校验按钮样式和定位 */
 .reverse-check-btn {
-  width: 20px; 
-  height: 20px; 
+  width: 20px;
+  height: 20px;
   padding: 0;
-  
   position: absolute;
-  bottom: -8px; 
-  right: -8px; 
-  
+  bottom: -8px;
+  right: -8px;
   border-radius: 50%;
   background-color: #555;
-  
   text-indent: -9999px;
   overflow: hidden;
-  
   cursor: pointer;
   border: none;
-  
   opacity: 0;
   visibility: hidden;
-  
   transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
   z-index: 10;
-  
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   transform: scale(0.8);
 }
@@ -177,13 +178,16 @@ select:focus {
 
 /* 底部输入区域整合 */
 .input-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   padding: 10px;
-  background-color: #1a1a1a;
-  border: 1px solid #555;
-  border-radius: 12px;
-  transition: border-color 0.2s ease;
+  background-color: rgba(26, 26, 26, 0.75);
+  border-top: 1px solid #333;
+  z-index: 10;
 }
 
 .input-area:focus-within {
@@ -193,15 +197,20 @@ select:focus {
 textarea {
   width: 100%;
   min-height: 60px;
+  /* 初始高度 */
   max-height: 120px;
+  /* 最大高度，约等于初始高度的两倍 */
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 12px;
   border: 1px solid #1a1a1a;
-  background-color: #1a1a1a;
+  background-color: rgba(26, 26, 26, 0.5);
   color: #e0e0e0;
   resize: none;
-  font-size: 1.5em;
+  font-family: inherit;
+  /* 明确继承字体 */
+  font-size: 1.2em;
+  line-height: 1.3em;
   box-sizing: border-box;
 }
 
@@ -384,6 +393,7 @@ button:active {
   cursor: not-allowed;
   background-color: transparent;
 }
+
 .custom-select-option.disabled:hover {
   background-color: transparent;
 }
@@ -451,9 +461,12 @@ button:active {
 .options-container label {
   font-size: 1.2em;
   line-height: 2.0;
-  display: block; /* 确保label独占一行，解决错位 */
-  margin-bottom: 5px; /* 增加label与输入框的间距 */
-  width: 100%; /* 确保label不会被压缩 */
+  display: block;
+  /* 确保label独占一行，解决错位 */
+  margin-bottom: 5px;
+  /* 增加label与输入框的间距 */
+  width: 100%;
+  /* 确保label不会被压缩 */
   box-sizing: border-box;
 }
 
@@ -462,7 +475,8 @@ button:active {
 .options-container select {
   font-size: 1.1em;
   line-height: 1.4;
-  margin-bottom: 15px; /* 增加输入框之间的间距 */
+  margin-bottom: 15px;
+  /* 增加输入框之间的间距 */
 }
 
 /* 新增: 让保存按钮居中 */
@@ -492,15 +506,18 @@ button:active {
   padding: 10px 20px;
   font-weight: bold;
   cursor: pointer;
-  background-color: #007bff; /* 默认蓝色 */
+  background-color: #007bff;
+  /* 默认蓝色 */
   color: white;
-  border: 1px solid #007bff; /* 蓝色边框 */
+  border: 1px solid #007bff;
+  /* 蓝色边框 */
   border-radius: 8px;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .test-btn:hover {
-  background-color: #0056b3; /* 鼠标悬停时变深 */
+  background-color: #0056b3;
+  /* 鼠标悬停时变深 */
   border-color: #0056b3;
 }
 
@@ -514,7 +531,8 @@ button:active {
   border: 1px solid #777;
   border-radius: 8px;
   transition: background-color 0.2s ease, border-color 0.2s ease;
-  margin: 0; /* 移除原来的 margin */
+  margin: 0;
+  /* 移除原来的 margin */
 }
 
 /* 保存按钮默认禁用样式 (灰色) */

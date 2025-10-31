@@ -270,6 +270,7 @@ sendBtn.addEventListener('click', () => {
   });
 
   userInputTextarea.value = '';
+  userInputTextarea.style.height = '60px'; // Reset height
 });
 
 // Listen for Ctrl + Enter to send, Enter for newline
@@ -280,6 +281,12 @@ userInputTextarea.addEventListener('keydown', (e) => {
   }
 });
 
+// Auto-expanding textarea
+userInputTextarea.addEventListener('input', () => {
+  userInputTextarea.style.height = 'auto';
+  userInputTextarea.style.height = `${userInputTextarea.scrollHeight}px`;
+});
+
 // Chat list scroll effect
 function scrollChatToBottom() {
   chatArea.scrollTo({
@@ -287,3 +294,37 @@ function scrollChatToBottom() {
     behavior: 'smooth'
   });
 }
+
+// Header auto-hide on scroll
+const header = document.querySelector('.header');
+let lastScrollTop = 0;
+
+chatArea.addEventListener('scroll', () => {
+  let scrollTop = chatArea.scrollTop;
+  const headerHeight = header.offsetHeight;
+
+  // If scrolled close to the top, show header
+  if (scrollTop < headerHeight) {
+    header.classList.remove('header-hidden');
+  } 
+  // If scrolling down and away from the top, hide header
+  else if (scrollTop > lastScrollTop) {
+    header.classList.add('header-hidden');
+  }
+  
+  lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+});
+
+chatArea.addEventListener('mousemove', (event) => {
+  const headerHeight = header.offsetHeight;
+  if (event.clientY < headerHeight) {
+    header.classList.remove('header-hidden');
+  }
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'translateText') {
+    userInputTextarea.value = request.text;
+    sendBtn.click();
+  }
+});
