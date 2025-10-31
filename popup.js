@@ -162,10 +162,43 @@ function createMessageBubble(text, className, originalFullText = null) {
   textContent.textContent = text;
   messageEl.appendChild(textContent);
 
+  // Create button container for better styling
+  const buttonContainer = document.createElement('div');
+  buttonContainer.classList.add('message-buttons');
+  messageEl.appendChild(buttonContainer);
+
   if (className === 'ai-message') {
+    // Add copy button for AI messages
+    const copyBtn = document.createElement('button');
+    copyBtn.classList.add('copy-btn');
+    copyBtn.title = '复制译文';
+    buttonContainer.appendChild(copyBtn);
+
+    copyBtn.addEventListener('click', () => {
+      // Extract the translation text (remove language prefix if present)
+      let textToCopy = originalFullText || text;
+      const colonIndex = textToCopy.indexOf(': ');
+      if (colonIndex > 0) {
+        textToCopy = textToCopy.substring(colonIndex + 2);
+      }
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        // Visual feedback for successful copy
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+        }, 1500);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    });
+
+    // Add reverse check button (existing functionality)
     const checkBtn = document.createElement('button');
     checkBtn.classList.add('reverse-check-btn');
-    messageEl.appendChild(checkBtn);
+    checkBtn.title = '验证翻译';
+    buttonContainer.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
       if (messageEl.querySelector('.reverse-check-result')) {
@@ -191,7 +224,29 @@ function createMessageBubble(text, className, originalFullText = null) {
         }
       });
     });
+  } else if (className === 'user-message') {
+    // Add edit button for user messages
+    const editBtn = document.createElement('button');
+    editBtn.classList.add('edit-btn');
+    editBtn.title = '编辑消息';
+    buttonContainer.appendChild(editBtn);
+
+    editBtn.addEventListener('click', () => {
+      // Extract user message text
+      let textToEdit = text;
+      
+      // Fill the input textarea with the user message
+      userInputTextarea.value = textToEdit;
+      userInputTextarea.focus();
+      
+      // Trigger input event to auto-resize textarea
+      userInputTextarea.dispatchEvent(new Event('input'));
+      
+      // Scroll to the input area
+      userInputTextarea.scrollIntoView({ behavior: 'smooth' });
+    });
   }
+  
   return messageEl;
 }
 
