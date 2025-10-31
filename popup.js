@@ -171,7 +171,7 @@ function createMessageBubble(text, className, originalFullText = null) {
     // Add copy button for AI messages
     const copyBtn = document.createElement('button');
     copyBtn.classList.add('copy-btn');
-    copyBtn.title = '复制译文';
+    copyBtn.title = 'Copy';
     buttonContainer.appendChild(copyBtn);
 
     copyBtn.addEventListener('click', () => {
@@ -197,7 +197,7 @@ function createMessageBubble(text, className, originalFullText = null) {
     // Add reverse check button (existing functionality)
     const checkBtn = document.createElement('button');
     checkBtn.classList.add('reverse-check-btn');
-    checkBtn.title = '验证翻译';
+    checkBtn.title = 'Verify(EN)';
     buttonContainer.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
@@ -228,7 +228,7 @@ function createMessageBubble(text, className, originalFullText = null) {
     // Add edit button for user messages
     const editBtn = document.createElement('button');
     editBtn.classList.add('edit-btn');
-    editBtn.title = '编辑消息';
+    editBtn.title = 'Edit';
     buttonContainer.appendChild(editBtn);
 
     editBtn.addEventListener('click', () => {
