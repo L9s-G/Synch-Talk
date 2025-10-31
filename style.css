@@ -126,41 +126,105 @@ select:focus {
   border-bottom-left-radius: 4px;
 }
 
-/* 校验按钮样式和定位 */
-.reverse-check-btn {
-  width: 20px;
-  height: 20px;
-  padding: 0;
+/* 消息按钮容器 */
+.message-buttons {
   position: absolute;
   bottom: -8px;
   right: -8px;
-  border-radius: 50%;
-  background-color: #555;
-  text-indent: -9999px;
-  overflow: hidden;
-  cursor: pointer;
-  border: none;
+  display: flex;
+  gap: 5px;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
   z-index: 10;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  transform: scale(0.8);
 }
 
-/* 鼠标悬停在 AI 消息气泡上时，显示按钮 */
-.ai-message:hover .reverse-check-btn {
+/* 鼠标悬停在消息气泡上时，显示按钮容器 */
+.message:hover .message-buttons {
   opacity: 1;
   visibility: visible;
-  transform: scale(1);
 }
 
-/* 按钮的 hover 效果 */
-.reverse-check-btn:hover {
+/* 通用按钮样式 */
+.reverse-check-btn,
+.copy-btn,
+.edit-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: #555;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transform: scale(0.8);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  text-indent: 0;
+}
+
+/* 按钮图标 */
+.copy-btn::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' transform='matrix(-1, 0, 0, 1, 0, 0)'><path d='M20.9983 10C20.9862 7.82497 20.8897 6.64706 20.1213 5.87868C19.2426 5 17.8284 5 15 5H12C9.17157 5 7.75736 5 6.87868 5.87868C6 6.75736 6 8.17157 6 11V16C6 18.8284 6 20.2426 6.87868 21.1213C7.75736 22 9.17157 22 12 22H15C17.8284 22 19.2426 22 20.1213 21.1213C21 20.2426 21 18.8284 21 16V15' stroke='white' stroke-width='1.5' stroke-linecap='round'></path><path d='M3 10V16C3 17.6569 4.34315 19 6 19M18 5C18 3.34315 16.6569 2 15 2H11C7.22876 2 5.34315 2 4.17157 3.17157C3.51839 3.82475 3.22937 4.69989 3.10149 6' stroke='white' stroke-width='1.5' stroke-linecap='round'></path></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.edit-btn::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M21 3L12 12M12 12H17.3438M12 12V6.65625' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path><path d='M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2M22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2.49073 19.5618 2.16444 18.1934 2.0551 16' stroke='white' stroke-width='1.5' stroke-linecap='round'></path></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.reverse-check-btn::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M4.56499 12.4068C4.29258 12.0947 3.81879 12.0626 3.50676 12.335C3.19472 12.6074 3.1626 13.0812 3.43501 13.3932L4.56499 12.4068ZM7.14286 16.5L6.57787 16.9932C6.7203 17.1564 6.92629 17.25 7.14286 17.25C7.35942 17.25 7.56542 17.1564 7.70784 16.9932L7.14286 16.5ZM15.565 7.99324C15.8374 7.68121 15.8053 7.20742 15.4932 6.93501C15.1812 6.6626 14.7074 6.69472 14.435 7.00676L15.565 7.99324ZM10.5064 11.5068C10.234 11.8188 10.2662 12.2926 10.5782 12.565C10.8902 12.8374 11.364 12.8053 11.6364 12.4932L10.5064 11.5068ZM9.67213 14.7432C9.94454 14.4312 9.91242 13.9574 9.60039 13.685C9.28835 13.4126 8.81457 13.4447 8.54215 13.7568L9.67213 14.7432ZM3.43501 13.3932L6.57787 16.9932L7.70784 16.0068L4.56499 12.4068L3.43501 13.3932ZM7.70784 16.9932L9.67213 14.7432L8.54215 13.7568L6.57787 16.0068L7.70784 16.9932ZM11.6364 12.4932L13.6007 10.2432L12.4707 9.25676L10.5064 11.5068L11.6364 12.4932ZM13.6007 10.2432L15.565 7.99324L14.435 7.00676L12.4707 9.25676L13.6007 10.2432Z' fill='white'></path><path d='M20.0002 7.5625L15.7144 12.0625M11.0002 16L11.4286 16.5625L13.5715 14.3125' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'></path></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* 按钮悬停效果 */
+.reverse-check-btn:hover,
+.copy-btn:hover,
+.edit-btn:hover {
   background-color: #007bff;
+  transform: scale(1.1);
 }
 
-/* 当 AI 消息气泡有校验结果时，隐藏按钮 */
+/* 复制按钮特定样式 */
+.copy-btn {
+  background-color: #555;
+}
+
+.copy-btn.copied {
+  background-color: #28a745;
+}
+
+/* 编辑按钮特定样式 */
+.edit-btn {
+  background-color: #555;
+}
+
+/* 当 AI 消息气泡有校验结果时，隐藏校验按钮 */
 .ai-message.has-reverse-check .reverse-check-btn {
   opacity: 0;
   visibility: hidden;
