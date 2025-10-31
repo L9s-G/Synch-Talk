@@ -298,5 +298,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const { provider, ...settings } = request;
     testApi(provider, settings).then(sendResponse);
     return true;
+  } else if (request.type === 'captureContent') {
+    console.log('Background script: Received captureContent message.', request);
+    // Store the captured content in session storage
+    chrome.storage.session.set({ capturedContent: { text: request.text, url: request.url, title: request.title } }, () => {
+      console.log('Background script: Stored captured content in session storage.', { text: request.text, url: request.url, title: request.title });
+    });
   }
 });

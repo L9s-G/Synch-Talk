@@ -166,6 +166,7 @@ document.addEventListener('click', (event) => {
 document.addEventListener('DOMContentLoaded', () => {
   populateLanguages();
   loadSettings();
+  loadCapturedContent(); // Load captured content when popup opens
 });
 
 // Dynamically create message bubble and add to chat area
@@ -322,9 +323,20 @@ chatArea.addEventListener('mousemove', (event) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === 'translateText') {
-    userInputTextarea.value = request.text;
-    sendBtn.click();
+// Listen for changes in session storage (e.g., from content script)
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'session' && changes.capturedContent) {
+    const newContent = changes.capturedContent.newValue;
+    if (newContent && newContent.text) {
+      console.log('Popup script: Captured content updated via storage change.', newContent);
+      userInputTextarea.value = newContent.text;
+      console.log('Updated Captured URL:', newContent.url);
+      console.log('Updated Captured Title:', newContent.title);
+      userInputTextarea.dispatchEvent(new Event('input'));
+      console.log('Popup script: Attempting to click send button with text:', userInputTextarea.value);
+      sendBtn.click(); // Automatically trigger send
+    } else {
+      console.log('Popup script: Captured content cleared or invalid via storage change.');
+    }
   }
 });
