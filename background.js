@@ -299,10 +299,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     testApi(provider, settings).then(sendResponse);
     return true;
   } else if (request.type === 'captureContent') {
-    console.log('Background script: Received captureContent message.', request);
-    // Store the captured content in session storage
-    chrome.storage.session.set({ capturedContent: { text: request.text, url: request.url, title: request.title } }, () => {
-      console.log('Background script: Stored captured content in session storage.', { text: request.text, url: request.url, title: request.title });
-    });
+    // Handle messages from content scripts to capture page content.
+    // Stores the text, URL, and title in chrome.storage.session for the side panel to access.
+    chrome.storage.session.set({ capturedContent: { text: request.text, url: request.url, title: request.title } });
   }
 });

@@ -42,16 +42,12 @@ function populateLanguages() {
     optionDiv.appendChild(label);
     targetLangOptionsContainer.appendChild(optionDiv);
   });
-  
-  // This logic will be handled by loadSettings(), so remove it from here
-  // updateSelectedTargetLanguages();
 }
 
 // Update display of selected target languages
 function updateSelectedTargetLanguages() {
   selectedTargetLanguages = Array.from(targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]:checked'))
                                .map(checkbox => checkbox.value);
-  //TODO: Add: Save new selectedTargetLanguages[]
   saveSettings();
   
   if (selectedTargetLanguages.length === 0) {
@@ -78,7 +74,7 @@ function updateTargetLanguagesAvailability() {
   updateSelectedTargetLanguages();
 }
 
-// --- New: Save and load settings ---
+// --- Save and load settings ---
 function saveSettings() {
   const settings = {
     sourceLanguage: sourceLangSelect.value,
@@ -92,12 +88,10 @@ function loadSettings() {
   chrome.storage.local.get('settings', (data) => {
     if (data.settings) {
       const { sourceLanguage, targetLanguages, isTutorMode } = data.settings;
-      //TODO: Modify: Select source language based on record
       if (sourceLanguage) {
         sourceLangSelect.value = sourceLanguage;
       }
       
-      //TODO: Add: Update selectedTargetLanguages[] based on recorded languages
       selectedTargetLanguages = targetLanguages || [];
       tutorModeToggle.checked = isTutorMode;
       const checkboxes = targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]');
@@ -105,36 +99,27 @@ function loadSettings() {
         checkbox.checked = selectedTargetLanguages.includes(checkbox.value);
       });
     }
-    // Ensure language availability is updated immediately after loading
     updateTargetLanguagesAvailability();
   });
 }
 
-// --- Critical fix: Unified handling of language option click events ---
+// --- Unified handling of language option click events ---
 targetLangOptionsContainer.addEventListener('click', (event) => {
   const clickedOption = event.target.closest('.custom-select-option');
   if (clickedOption) {
     const checkbox = clickedOption.querySelector('input[type="checkbox"]');
-    // If the checkbox is not disabled, toggle its checked state and update UI
     if (checkbox && !checkbox.disabled) {
-      // Check if the clicked element is the checkbox or its label
-      // If it is, the default behavior handles the checked state. We only update the UI.
-      // If not, we manually toggle the checked state and update the UI.
       if (event.target !== checkbox && event.target !== clickedOption.querySelector('label')) {
         checkbox.checked = !checkbox.checked;
       }
-      // In any case, call the update function to ensure UI syncs with checked state
       updateSelectedTargetLanguages();	  
     }
   }
 });
-// ---------------------------------------------
 
 // Listen for changes in the source language dropdown
-									   
 sourceLangSelect.addEventListener('change', () => {
   updateTargetLanguagesAvailability();
-  //TODO: Add: Save new source language
   saveSettings();
 });
 
@@ -147,7 +132,6 @@ targetLangTrigger.addEventListener('click', (event) => {
   targetLangOptionsContainer.classList.toggle('open');
   targetLangTrigger.classList.toggle('open');
   
-  // Position the dropdown below the trigger
   const rect = targetLangTrigger.getBoundingClientRect();
   targetLangOptionsContainer.style.top = `${rect.bottom + window.scrollY}px`;
   targetLangOptionsContainer.style.left = `${rect.left + window.scrollX}px`;
@@ -184,7 +168,6 @@ function createMessageBubble(text, className, originalFullText = null) {
     messageEl.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
-      // If the result already exists, do not call again and return directly
       if (messageEl.querySelector('.reverse-check-result')) {
         return;
       }
@@ -304,11 +287,9 @@ chatArea.addEventListener('scroll', () => {
   let scrollTop = chatArea.scrollTop;
   const headerHeight = header.offsetHeight;
 
-  // If scrolled close to the top, show header
   if (scrollTop < headerHeight) {
     header.classList.remove('header-hidden');
   } 
-  // If scrolling down and away from the top, hide header
   else if (scrollTop > lastScrollTop) {
     header.classList.add('header-hidden');
   }
@@ -323,20 +304,27 @@ chatArea.addEventListener('mousemove', (event) => {
   }
 });
 
+// Function to load captured content from session storage
+// This runs when the side panel is opened, populating the input with any previously captured text.
+function loadCapturedContent() {
+  chrome.storage.session.get(['capturedContent'], (result) => {
+    if (result.capturedContent && result.capturedContent.text) {
+      userInputTextarea.value = result.capturedContent.text;
+      // Trigger input event to auto-resize textarea if needed
+      userInputTextarea.dispatchEvent(new Event('input'));
+    }
+  });
+}
+
 // Listen for changes in session storage (e.g., from content script)
+// When new content is captured, update the input field and automatically trigger the send button.
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'session' && changes.capturedContent) {
     const newContent = changes.capturedContent.newValue;
     if (newContent && newContent.text) {
-      console.log('Popup script: Captured content updated via storage change.', newContent);
       userInputTextarea.value = newContent.text;
-      console.log('Updated Captured URL:', newContent.url);
-      console.log('Updated Captured Title:', newContent.title);
       userInputTextarea.dispatchEvent(new Event('input'));
-      console.log('Popup script: Attempting to click send button with text:', userInputTextarea.value);
       sendBtn.click(); // Automatically trigger send
-    } else {
-      console.log('Popup script: Captured content cleared or invalid via storage change.');
     }
   }
 });
