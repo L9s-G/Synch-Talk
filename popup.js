@@ -168,6 +168,12 @@ function createMessageBubble(text, className, originalFullText = null) {
   messageEl.appendChild(buttonContainer);
 
   if (className === 'ai-message') {
+    // Add reverse check button first
+    const checkBtn = document.createElement('button');
+    checkBtn.classList.add('reverse-check-btn');
+    checkBtn.title = 'Verify(EN)';
+    buttonContainer.appendChild(checkBtn);
+    
     // Add copy button for AI messages
     const copyBtn = document.createElement('button');
     copyBtn.classList.add('copy-btn');
@@ -193,12 +199,6 @@ function createMessageBubble(text, className, originalFullText = null) {
         console.error('Failed to copy text: ', err);
       });
     });
-
-    // Add reverse check button (existing functionality)
-    const checkBtn = document.createElement('button');
-    checkBtn.classList.add('reverse-check-btn');
-    checkBtn.title = 'Verify(EN)';
-    buttonContainer.appendChild(checkBtn);
 
     checkBtn.addEventListener('click', () => {
       if (messageEl.querySelector('.reverse-check-result')) {
