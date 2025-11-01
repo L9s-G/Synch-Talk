@@ -205,6 +205,12 @@ function createMessageBubble(text, className, originalFullText = null) {
         return;
       }
       
+      // Visual feedback for button click
+      checkBtn.classList.add('checked');
+      setTimeout(() => {
+        checkBtn.classList.remove('checked');
+      }, 1500);
+      
       chrome.runtime.sendMessage({
         action: 'reverseCheck',
         textToTranslate: originalFullText || text
@@ -238,6 +244,12 @@ function createMessageBubble(text, className, originalFullText = null) {
       // Fill the input textarea with the user message
       userInputTextarea.value = textToEdit;
       userInputTextarea.focus();
+      
+      // Visual feedback for successful edit
+      editBtn.classList.add('edited');
+      setTimeout(() => {
+        editBtn.classList.remove('edited');
+      }, 1500);
       
       // Trigger input event to auto-resize textarea
       userInputTextarea.dispatchEvent(new Event('input'));
