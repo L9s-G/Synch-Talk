@@ -168,6 +168,12 @@ function createMessageBubble(text, className, originalFullText = null) {
   messageEl.appendChild(buttonContainer);
 
   if (className === 'ai-message') {
+    // Add reverse check button first
+    const checkBtn = document.createElement('button');
+    checkBtn.classList.add('reverse-check-btn');
+    checkBtn.title = 'Verify(EN)';
+    buttonContainer.appendChild(checkBtn);
+    
     // Add copy button for AI messages
     const copyBtn = document.createElement('button');
     copyBtn.classList.add('copy-btn');
@@ -194,16 +200,16 @@ function createMessageBubble(text, className, originalFullText = null) {
       });
     });
 
-    // Add reverse check button (existing functionality)
-    const checkBtn = document.createElement('button');
-    checkBtn.classList.add('reverse-check-btn');
-    checkBtn.title = 'Verify(EN)';
-    buttonContainer.appendChild(checkBtn);
-
     checkBtn.addEventListener('click', () => {
       if (messageEl.querySelector('.reverse-check-result')) {
         return;
       }
+      
+      // Visual feedback for button click
+      checkBtn.classList.add('checked');
+      setTimeout(() => {
+        checkBtn.classList.remove('checked');
+      }, 1500);
       
       chrome.runtime.sendMessage({
         action: 'reverseCheck',
@@ -238,6 +244,12 @@ function createMessageBubble(text, className, originalFullText = null) {
       // Fill the input textarea with the user message
       userInputTextarea.value = textToEdit;
       userInputTextarea.focus();
+      
+      // Visual feedback for successful edit
+      editBtn.classList.add('edited');
+      setTimeout(() => {
+        editBtn.classList.remove('edited');
+      }, 1500);
       
       // Trigger input event to auto-resize textarea
       userInputTextarea.dispatchEvent(new Event('input'));
