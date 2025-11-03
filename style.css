@@ -1,7 +1,7 @@
 /* 通用样式和深色背景主题 */
 body {
   margin: 0;
-  font-family: "Noto Sans", "Noto Sans Greek", "Noto Sans SC", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   background-color: #1a1a1a;
