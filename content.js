@@ -10,7 +10,7 @@ if (chrome.runtime && chrome.runtime.id) {
     url: window.location.href,
     title: document.title,
     text: '' // No text selected initially
-  }, function() {
+  }, function () {
     if (chrome.runtime.lastError) {
       console.error('Content script: Error sending initial message:', chrome.runtime.lastError.message);
     }
@@ -42,8 +42,11 @@ document.addEventListener('keydown', (event) => {
     }, 500);
 
     let text = window.getSelection().toString().trim();
-    
-    // If no text is selected, try to get text from the parent element under the cursor.
+
+    // 文本捕获策略：
+    // 1. 如果用户有高亮选中的文本，则使用该文本。
+    // 2. 如果没有选中文本，则尝试获取当前鼠标指针下方元素的父元素的`innerText`。
+    //    这是一种启发式方法，旨在捕获用户可能感兴趣的整个文本块（如段落）。
     if (!text) {
       const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
       if (elementUnderCursor && elementUnderCursor.parentElement) {
@@ -51,7 +54,7 @@ document.addEventListener('keydown', (event) => {
       }
     }
 
-    // If text is found, send it along with the current page's URL and title to the background script.
+    // 如果成功捕获到文本，则将其发送到后台脚本。
     if (text) {
       if (chrome.runtime && chrome.runtime.id) {
         chrome.runtime.sendMessage({
@@ -59,9 +62,9 @@ document.addEventListener('keydown', (event) => {
           text: text,
           url: window.location.href,
           title: document.title
-        }, function() {
+        }, function () {
           if (chrome.runtime.lastError) {
-            // Log any errors during message sending, typically due to context invalidation.
+            // 记录消息发送时可能发生的错误，通常是由于扩展上下文失效。
             console.error('Content script: Error sending keydown message:', chrome.runtime.lastError.message);
           }
         });

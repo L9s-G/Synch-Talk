@@ -1,7 +1,7 @@
 /* 通用样式和深色背景主题 */
 body {
   margin: 0;
-  font-family: "Noto Sans", "Noto Sans Greek", "Noto Sans SC", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   background-color: #1a1a1a;
@@ -242,7 +242,7 @@ select:focus {
   right: 0;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 5px;
   background-color: rgba(26, 26, 26, 0.75);
   border-top: 1px solid #333;
   z-index: 10;
@@ -259,7 +259,7 @@ textarea {
   max-height: 120px;
   /* 最大高度，约等于初始高度的两倍 */
   padding: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   border-radius: 12px;
   border: 1px solid #1a1a1a;
   background-color: rgba(26, 26, 26, 0.5);
@@ -297,62 +297,80 @@ textarea:focus {
 
 .controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
 }
 
-.controls label {
+.controls button {
+  width: 36px;
+  /* Base size */
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  transform: scale(0.667);
+  /* Slightly smaller by default */
   display: flex;
   align-items: center;
-  font-size: 0.9em;
-  cursor: pointer;
+  justify-content: center;
 }
 
-.controls input[type="checkbox"] {
-  margin-right: 5px;
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background-color: #1a1a1a;
-  position: relative;
-  cursor: pointer;
+.controls button:hover {
+  transform: scale(1);
+  /* Scale up on hover */
 }
 
-.controls input[type="checkbox"]:checked {
+#send-btn {
+  background-color: #555;
+  /* Gray background */
+}
+
+#send-btn:hover {
   background-color: #007bff;
-  border-color: #007bff;
+  /* Blue background on hover */
 }
 
-.controls input[type="checkbox"]:checked::after {
-  content: '✔';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  font-size: 12px;
+#send-btn:active {
+  background-color: #28a745;
+  /* Green background on active */
 }
 
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 15px;
-  cursor: pointer;
-  font-size: 0.95em;
-  transition: background-color 0.2s ease;
+#tutor-mode-toggle {
+  background: none;
 }
 
-button:hover {
-  background-color: #0056b3;
+#tutor-mode-toggle:hover {
+  background-color: #555;
+  /* Gray background on hover */
 }
 
-button:active {
-  background-color: #004085;
+/* 输入区域按钮SVG图标样式 */
+.controls button#tutor-mode-toggle::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z' fill='%23ffffff'/><path opacity='0.4' d='M12.0002 14.5C6.99018 14.5 2.91016 17.86 2.91016 22C2.91016 22.28 3.13016 22.5 3.41016 22.5H20.5902C20.8702 22.5 21.0902 22.28 21.0902 22C21.0902 17.86 17.0102 14.5 12.0002 14.5Z' fill='%23ffffff'/><path d='M21.4291 14.7401C20.5291 13.8401 19.8191 14.1301 19.2091 14.7401L15.669 18.2801C15.529 18.4201 15.3991 18.6801 15.3691 18.8701L15.1791 20.2201C15.1091 20.7101 15.4491 21.0501 15.9391 20.9801L17.289 20.7901C17.479 20.7601 17.7491 20.6301 17.8791 20.4901L21.419 16.9501C22.039 16.3501 22.3291 15.6401 21.4291 14.7401Z' fill='%23ffffff'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.controls button#tutor-mode-toggle.active::before {
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z' fill='%23ffc107'/><path opacity='0.4' d='M12.0002 14.5C6.99018 14.5 2.91016 17.86 2.91016 22C2.91016 22.28 3.13016 22.5 3.41016 22.5H20.5902C20.8702 22.5 21.0902 22.28 21.0902 22C21.0902 17.86 17.0102 14.5 12.0002 14.5Z' fill='%23ffc107'/><path d='M21.4291 14.7401C20.5291 13.8401 19.8191 14.1301 19.2091 14.7401L15.669 18.2801C15.529 18.4201 15.3991 18.6801 15.3691 18.8701L15.1791 20.2201C15.1091 20.7101 15.4491 21.0501 15.9391 20.9801L17.289 20.7901C17.479 20.7601 17.7491 20.6301 17.8791 20.4901L21.419 16.9501C22.039 16.3501 22.3291 15.6401 21.4291 14.7401Z' fill='%23ffc107'/></svg>");
+}
+
+.controls button#send-btn::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M14.2209 21.6301C13.0409 21.6301 11.3709 20.8001 10.0509 16.8301L9.33086 14.6701L7.17086 13.9501C3.21086 12.6301 2.38086 10.9601 2.38086 9.78007C2.38086 8.61007 3.21086 6.93007 7.17086 5.60007L15.6609 2.77007C17.7809 2.06007 19.5509 2.27007 20.6409 3.35007C21.7309 4.43007 21.9409 6.21007 21.2309 8.33007L18.4009 16.8201C17.0709 20.8001 15.4009 21.6301 14.2209 21.6301ZM7.64086 7.03007C4.86086 7.96007 3.87086 9.06007 3.87086 9.78007C3.87086 10.5001 4.86086 11.6001 7.64086 12.5201L10.1609 13.3601C10.3809 13.4301 10.5609 13.6101 10.6309 13.8301L11.4709 16.3501C12.3909 19.1301 13.5009 20.1201 14.2209 20.1201C14.9409 20.1201 16.0409 19.1301 16.9709 16.3501L19.8009 7.86007C20.3109 6.32007 20.2209 5.06007 19.5709 4.41007C18.9209 3.76007 17.6609 3.68007 16.1309 4.19007L7.64086 7.03007Z' fill='%23ffffff'/><path d='M10.1108 14.4C9.92078 14.4 9.73078 14.33 9.58078 14.18C9.29078 13.89 9.29078 13.41 9.58078 13.12L13.1608 9.53C13.4508 9.24 13.9308 9.24 14.2208 9.53C14.5108 9.82 14.5108 10.3 14.2208 10.59L10.6408 14.18C10.5008 14.33 10.3008 14.4 10.1108 14.4Z' fill='%23ffffff'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
 
 /* 自定义多选下拉菜单样式 */
