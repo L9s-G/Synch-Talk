@@ -79,7 +79,7 @@ function saveSettings() {
   const settings = {
     sourceLanguage: sourceLangSelect.value,
     targetLanguages: selectedTargetLanguages,
-    isTutorMode: tutorModeToggle.checked
+    isTutorMode: isTutorMode
   };
   chrome.storage.local.set({ settings });
 }
@@ -87,13 +87,14 @@ function saveSettings() {
 function loadSettings() {
   chrome.storage.local.get('settings', (data) => {
     if (data.settings) {
-      const { sourceLanguage, targetLanguages, isTutorMode } = data.settings;
+      const { sourceLanguage, targetLanguages, isTutorMode: loadedTutorMode } = data.settings;
       if (sourceLanguage) {
         sourceLangSelect.value = sourceLanguage;
       }
       
       selectedTargetLanguages = targetLanguages || [];
-      tutorModeToggle.checked = isTutorMode;
+      isTutorMode = loadedTutorMode;
+      tutorModeToggle.classList.toggle('active', isTutorMode);
       const checkboxes = targetLangOptionsContainer.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach(checkbox => {
         checkbox.checked = selectedTargetLanguages.includes(checkbox.value);
@@ -123,8 +124,14 @@ sourceLangSelect.addEventListener('change', () => {
   saveSettings();
 });
 
+let isTutorMode = false;
+
 // Listen for changes in the tutor mode toggle
-tutorModeToggle.addEventListener('change', saveSettings);
+tutorModeToggle.addEventListener('click', () => {
+  isTutorMode = !isTutorMode;
+  tutorModeToggle.classList.toggle('active', isTutorMode);
+  saveSettings();
+});
 
 // Show/hide target language options on trigger click
 targetLangTrigger.addEventListener('click', (event) => {
@@ -294,7 +301,7 @@ sendBtn.addEventListener('click', () => {
 
   const sourceLang = sourceLangSelect.value;
   const targetLangs = selectedTargetLanguages;
-  const isTutorMode = tutorModeToggle.checked;
+  
 
   if (targetLangs.length === 0) {
     const errorMessage = createMessageBubble("Please select at least one target language.", 'ai-message');
