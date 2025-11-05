@@ -483,8 +483,17 @@ textarea:focus {
   background-color: #2a2a2a;
 }
 
-/* 统一输入框样式，使其更长 */
-.input-group input[type="text"] {
+/* 统一输入框和下拉选择框样式 */
+.options-container input[type="text"],
+.options-container select {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 1.1em;
+  line-height: 1.4;
+  margin-bottom: 15px;
   width: 95%;
   min-width: 200px;
   box-sizing: border-box;
@@ -563,7 +572,7 @@ textarea:focus {
 }
 
 /* 新增: 让下拉选择框宽度加宽 */
-#providerSelect {
+#providerSelect, #geminiModel {
   width: 60%;
 }
 

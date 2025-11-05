@@ -162,7 +162,7 @@ async function makeApiCall(provider, endpoint, headers, body) {
  * @returns {Promise<object>} - 返回一个包含翻译结果、修正文本或错误信息的对象。
  */
 async function processAiInput(userInput, sourceLanguage, targetLanguages, isTutorMode) {
-  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
+  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
   const provider = settings.aiProvider || 'gemini';
 
   let prompt;
@@ -173,11 +173,11 @@ async function processAiInput(userInput, sourceLanguage, targetLanguages, isTuto
     if (!settings.geminiApiKey) {
       return { error: 'Please set your Gemini API key in the options page.' };
     }
+    const model = settings.geminiModel || 'gemini-flash-latest'; // Default to gemini-flash-latest if not set
     prompt = buildDynamicPrompt(userInput, sourceLanguage, targetLanguages, isTutorMode, true);
     const body = { contents: [{ parts: [{ text: prompt }] }] };
     const headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.geminiApiKey };
-    // 更新：使用 gemini-flash-lite-latest 模型以测试速度
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     apiResponse = await makeApiCall('Gemini', endpoint, headers, body);
 
     if (apiResponse.error) return apiResponse;
@@ -226,7 +226,7 @@ async function processAiInput(userInput, sourceLanguage, targetLanguages, isTuto
  * @returns {Promise<object>} - 返回一个包含翻译结果或错误信息的对象。
  */
 async function performReverseCheck(textToTranslate) {
-  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
+  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
   const provider = settings.aiProvider || 'gemini';
 
   const prompt = buildReverseCheckPrompt(textToTranslate);
@@ -237,9 +237,10 @@ async function performReverseCheck(textToTranslate) {
     if (!settings.geminiApiKey) {
       return { error: 'Please set your Gemini API key in the options page to use the reverse check function.' };
     }
+    const model = settings.geminiModel || 'gemini-flash-latest'; // Default to gemini-flash-latest if not set
     const body = { contents: [{ parts: [{ text: prompt }] }] };
     const headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.geminiApiKey };
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     apiResponse = await makeApiCall('Gemini', endpoint, headers, body);
     if (apiResponse.error) return apiResponse;
     content = apiResponse.candidates[0].content.parts[0].text;
@@ -276,10 +277,11 @@ async function testApi(provider, settings) {
 
   if (provider === 'gemini') {
     if (!settings.apiKey) return { success: false, error: 'Please enter your Gemini API key.' };
+    const model = settings.model
     prompt = "Test API connectivity. Respond with a single word: 'OK'.";
     body = { contents: [{ parts: [{ text: prompt }] }] };
     headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.apiKey };
-    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent`;
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
   } else if (provider === 'openai') {
     if (!settings.url || !settings.apiKey || !settings.model) {

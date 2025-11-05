@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Synch-Talk Options</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div class="container options-container">
     <h1>Synch-Talk Options</h1>
-    <p>Set your AI service API key here.</p>
 
     <div class="input-group">
       <label for="providerSelect">Select AI Provider:</label>
@@ -22,6 +23,14 @@
       <div class="input-group">
         <label for="geminiApiKey">Gemini API Key:</label>
         <input type="text" id="geminiApiKey" placeholder="Enter your Gemini API key">
+      </div>
+      <div class="input-group">
+        <label for="geminiModel">Select Gemini Model:</label>
+        <select id="geminiModel">
+          <option value="gemini-pro-latest">gemini-pro-latest</option>
+          <option value="gemini-flash-latest">gemini-flash-latest</option>
+          <option value="gemini-flash-lite-latest">gemini-flash-lite-latest</option>
+        </select>
       </div>
     </div>
 
@@ -39,7 +48,7 @@
         <input type="text" id="openAiModel" placeholder="e.g., gpt-4o-mini">
       </div>
     </div>
-    
+
     <div class="button-group">
       <button id="testButton" class="test-btn">Test</button>
       <button id="saveButton" class="save-btn disabled-btn" disabled>Save</button>
@@ -48,4 +57,5 @@
   </div>
   <script src="options.js"></script>
 </body>
+
 </html>
