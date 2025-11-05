@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Synch-Talk",
-  "version": "2.45",
+  "version": "2.5",
   "description": "Natural, Culturally-Aware AI Translator",
   "icons": {
     "16": "icons/icon-16.png",
