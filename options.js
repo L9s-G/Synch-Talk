@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const openAiUrlInput = document.getElementById('openAiUrl');
   const openAiApiKeyInput = document.getElementById('openAiApiKey');
   const openAiModelInput = document.getElementById('openAiModel');
+  const geminiModel = document.getElementById('geminiModel');
   const testButton = document.getElementById('testButton');
   const saveButton = document.getElementById('saveButton');
   const statusDiv = document.getElementById('status');
@@ -44,12 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 页面加载时，从Chrome存储中加载已保存的设置
-  chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'openAiUrl', 'openAiApiKey', 'openAiModel'], (data) => {
+  chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel'], (data) => {
     if (data.aiProvider) {
       providerSelect.value = data.aiProvider;
     }
     if (data.geminiApiKey) {
       geminiApiKeyInput.value = data.geminiApiKey;
+    }
+    if (data.geminiModel) {
+      geminiModel.value = data.geminiModel;
     }
     if (data.openAiUrl) {
       openAiUrlInput.value = data.openAiUrl;
@@ -57,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.openAiApiKey) {
       openAiApiKeyInput.value = data.openAiApiKey;
       // 优化：如果加载时所有必要的设置都已存在，则直接启用保存按钮。
-      if (data.aiProvider === 'gemini' && data.geminiApiKey) {
+      if (data.aiProvider === 'gemini' && data.geminiApiKey && data.geminiModel) {
         updateSaveButtonState(true);
       }
     }
@@ -78,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   providerSelect.addEventListener('change', updateUI);
 
   // 监听所有输入框的输入事件，任何改动都会禁用保存按钮，直到用户重新测试。
-  [geminiApiKeyInput, openAiUrlInput, openAiApiKeyInput, openAiModelInput].forEach(input => {
+  [geminiApiKeyInput, openAiUrlInput, openAiApiKeyInput, openAiModelInput, geminiModel].forEach(input => {
     input.addEventListener('input', () => updateSaveButtonState(false));
   });
 
@@ -90,11 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (provider === 'gemini') {
       const apiKey = geminiApiKeyInput.value.trim();
+      const model = geminiModel.value;
       if (!apiKey) {
         isValid = false;
         statusDiv.textContent = 'Please enter your Gemini API key.';
       }
       requestData.apiKey = apiKey;
+      requestData.model = model;
     } else if (provider === 'openai') {
       const url = openAiUrlInput.value.trim();
       const apiKey = openAiApiKeyInput.value.trim();
@@ -145,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (provider === 'gemini') {
       settingsToSave.geminiApiKey = geminiApiKeyInput.value;
+      settingsToSave.geminiModel = geminiModel.value;
     } else {
       settingsToSave.openAiUrl = openAiUrlInput.value;
       settingsToSave.openAiApiKey = openAiApiKeyInput.value;
