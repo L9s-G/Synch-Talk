@@ -285,7 +285,7 @@ function coerceToText(value) {
   if (value == null) return '';
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) {
-    return value.map(normalizeDisplayValue).filter(Boolean).join('\n');
+    return value.map(coerceToText).filter(Boolean).join('\n');
   }
   return String(value);
 }

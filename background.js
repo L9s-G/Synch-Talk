@@ -102,7 +102,7 @@ function normalizeAiValue(value) {
   if (value == null) return '';
   if (Array.isArray(value)) {
     if (value.length === 0) return '';
-    return value.map(normalizeDisplayValue).filter(Boolean).join('\n');
+    return value.map(normalizeAiValue).filter(Boolean).join('\n');
   }
   if (typeof value === 'object') {
     for (const key of ['text', 'translation', 'content', 'value', 'result', 'output']) {
