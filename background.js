@@ -98,7 +98,7 @@ function extractText(value) {
  * @param {*} value
  * @returns {string}
  */
-function normalizeDisplayValue(value) {
+function normalizeAiValue(value) {
   if (value == null) return '';
   if (Array.isArray(value)) {
     if (value.length === 0) return '';
@@ -106,7 +106,7 @@ function normalizeDisplayValue(value) {
   }
   if (typeof value === 'object') {
     for (const key of ['text', 'translation', 'content', 'value', 'result', 'output']) {
-      if (value[key] != null) return normalizeDisplayValue(value[key]);
+      if (value[key] != null) return normalizeAiValue(value[key]);
     }
     try { return JSON.stringify(value); } catch (e) { return String(value); }
   }
@@ -123,10 +123,10 @@ function normalizeAiResponse(data) {
   if (data.error) return data;
   const out = { ...data };
   if (out.detected_source_language != null) {
-    out.detected_source_language = normalizeDisplayValue(out.detected_source_language);
+    out.detected_source_language = normalizeAiValue(out.detected_source_language);
   }
   if (out.corrected_text != null) {
-    out.corrected_text = normalizeDisplayValue(out.corrected_text);
+    out.corrected_text = normalizeAiValue(out.corrected_text);
   }
   if (out.translations != null) {
     if (typeof out.translations !== 'object') {
@@ -135,11 +135,11 @@ function normalizeAiResponse(data) {
       const obj = {};
       out.translations.forEach(item => {
         if (Array.isArray(item) && item.length >= 2) {
-          obj[item[0]] = normalizeDisplayValue(item[1]);
+          obj[item[0]] = normalizeAiValue(item[1]);
         } else if (item && typeof item === 'object') {
           const lang = item.language || item.lang || item.target || item.name;
           if (lang != null) {
-            obj[lang] = normalizeDisplayValue(item.text || item.translation || item.content || item.value);
+            obj[lang] = normalizeAiValue(item.text || item.translation || item.content || item.value);
           }
         }
       });
@@ -147,7 +147,7 @@ function normalizeAiResponse(data) {
     } else {
       const obj = {};
       for (const key in out.translations) {
-        obj[key] = normalizeDisplayValue(out.translations[key]);
+        obj[key] = normalizeAiValue(out.translations[key]);
       }
       out.translations = obj;
     }
@@ -201,7 +201,7 @@ function cleanApiResponse(text) {
   if (parsed) {
     // 如果解析后的对象有 'text' 属性（常见于简单文本响应），则直接返回其值
     if (parsed && parsed.text != null) {
-      const textValue = normalizeDisplayValue(parsed.text);
+      const textValue = normalizeAiValue(parsed.text);
       if (textValue !== '') {
         return textValue.trim();
       }
@@ -425,9 +425,7 @@ async function performReverseCheck(textToTranslate) {
 
   // Clean the response to ensure it is plain text
   const cleanedText = cleanApiResponse(content);
-  const finalText = typeof cleanedText === 'string'
-    ? cleanedText
-    : (cleanedText && typeof cleanedText.text === 'string' ? cleanedText.text : JSON.stringify(cleanedText));
+  const finalText = normalizeAiValue(cleanedText);
 
   return { text: finalText.trim() };
 }

@@ -281,7 +281,7 @@ function stripLeadingLanguagePrefix(value) {
 }
 
 // UI 侧仅做与 schema 无关的类型强制（后台已保证契约类型，这里只防御性兜底）
-function normalizeDisplayValue(value) {
+function coerceToText(value) {
   if (value == null) return '';
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) {
@@ -294,13 +294,13 @@ function normalizeDisplayValue(value) {
 function displayAiResults(data, isTutorMode) {
   // 显示检测到的语言（如果有）
   if (data.detected_source_language) {
-    const detected = normalizeDisplayValue(data.detected_source_language);
+    const detected = coerceToText(data.detected_source_language);
     const infoMessage = createMessageBubble(`Detected Language: ${detected}`, 'ai-message info-message');
     chatArea.appendChild(infoMessage);
   }
 
   if (isTutorMode && data.corrected_text) {
-    const corrected = normalizeDisplayValue(data.corrected_text);
+    const corrected = coerceToText(data.corrected_text);
     const correctedUserMessage = createMessageBubble(`AI Tutor: ${corrected}`, 'ai-message', corrected);
     chatArea.appendChild(correctedUserMessage);
   }
@@ -308,7 +308,7 @@ function displayAiResults(data, isTutorMode) {
   // 后台契约保证 translations 为 Record<string,string>，UI 只消费
   if (data.translations && typeof data.translations === 'object' && !Array.isArray(data.translations)) {
     for (const lang in data.translations) {
-      const translation = normalizeDisplayValue(data.translations[lang]);
+      const translation = coerceToText(data.translations[lang]);
       const translatedMessage = createMessageBubble(`${lang}: ${translation}`, 'ai-message', translation);
       chatArea.appendChild(translatedMessage);
     }
