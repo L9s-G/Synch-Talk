@@ -165,7 +165,7 @@ function createMessageBubble(text, className, originalFullText = null) {
   messageEl.appendChild(textContent);
 
   // 为消息按钮创建一个容器，便于样式控制
-  const isStatusMessage = className && (className.includes('info-message') || className.includes('loading-message'));
+  const isStatusMessage = className && (className.includes('info-message') || className.includes('loading-message') || (className.includes('ai-message') && !originalFullText));
   
   if (!isStatusMessage) {
     const buttonContainer = document.createElement('div');
@@ -186,11 +186,14 @@ function createMessageBubble(text, className, originalFullText = null) {
       buttonContainer.appendChild(copyBtn);
 
       copyBtn.addEventListener('click', () => {
-        // Extract the translation text (remove language prefix if present)
+        // Prefer the raw text captured at creation time; only strip a leading
+        // "Language: " prefix when falling back to the displayed text.
         let textToCopy = originalFullText || text;
-        const colonIndex = textToCopy.indexOf(': ');
-        if (colonIndex > 0) {
-          textToCopy = textToCopy.substring(colonIndex + 2);
+        if (!originalFullText) {
+          const prefixMatch = textToCopy.match(/^[^:]+:\s/);
+          if (prefixMatch) {
+            textToCopy = textToCopy.substring(prefixMatch[0].length);
+          }
         }
 
         // Copy to clipboard
@@ -219,8 +222,8 @@ function createMessageBubble(text, className, originalFullText = null) {
         // 向后台脚本发送反向校验请求
         chrome.runtime.sendMessage({
           action: 'reverseCheck',
-          // 优先使用不带前缀的原始文本进行校验
-          textToTranslate: originalFullText || text
+          // 优先使用不带前缀的原始文本进行校验；回退时去掉前导 "Language: " 前缀
+          textToTranslate: originalFullText || stripLeadingLanguagePrefix(text)
         }, (response) => {
           if (response && response.text) {
             const checkResult = document.createElement('div');
@@ -270,22 +273,41 @@ function createMessageBubble(text, className, originalFullText = null) {
   return messageEl;
 }
 
+// 去掉消息文本前导的 "Language: " 前缀（如 "Chinese: hello" -> "hello"）
+function stripLeadingLanguagePrefix(value) {
+  const match = String(value).match(/^[^:]+:\s/);
+  return match ? String(value).substring(match[0].length) : String(value);
+}
+
+// UI 侧仅做与 schema 无关的类型强制（后台已保证契约类型，这里只防御性兜底）
+function normalizeDisplayValue(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value.map(normalizeDisplayValue).filter(Boolean).join('\n');
+  }
+  return String(value);
+}
+
 // Display AI translation results
 function displayAiResults(data, isTutorMode) {
   // 显示检测到的语言（如果有）
   if (data.detected_source_language) {
-    const infoMessage = createMessageBubble(`Detected Language: ${data.detected_source_language}`, 'ai-message info-message');
+    const detected = normalizeDisplayValue(data.detected_source_language);
+    const infoMessage = createMessageBubble(`Detected Language: ${detected}`, 'ai-message info-message');
     chatArea.appendChild(infoMessage);
   }
 
   if (isTutorMode && data.corrected_text) {
-    const correctedUserMessage = createMessageBubble(`AI Tutor: ${data.corrected_text}`, 'ai-message', data.corrected_text);
+    const corrected = normalizeDisplayValue(data.corrected_text);
+    const correctedUserMessage = createMessageBubble(`AI Tutor: ${corrected}`, 'ai-message', corrected);
     chatArea.appendChild(correctedUserMessage);
   }
 
-  if (data.translations) {
+  // 后台契约保证 translations 为 Record<string,string>，UI 只消费
+  if (data.translations && typeof data.translations === 'object' && !Array.isArray(data.translations)) {
     for (const lang in data.translations) {
-      const translation = data.translations[lang];
+      const translation = normalizeDisplayValue(data.translations[lang]);
       const translatedMessage = createMessageBubble(`${lang}: ${translation}`, 'ai-message', translation);
       chatArea.appendChild(translatedMessage);
     }

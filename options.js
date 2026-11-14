@@ -3,11 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const providerSelect = document.getElementById('providerSelect');
   const geminiSettingsGroup = document.getElementById('gemini-settings-group');
   const openAiSettingsGroup = document.getElementById('openai-settings-group');
+  const cfSettingsGroup = document.getElementById('cloudflare-settings-group');
   const geminiApiKeyInput = document.getElementById('geminiApiKey');
   const openAiUrlInput = document.getElementById('openAiUrl');
   const openAiApiKeyInput = document.getElementById('openAiApiKey');
   const openAiModelInput = document.getElementById('openAiModel');
   const geminiModel = document.getElementById('geminiModel');
+  const cfGatewayUrlInput = document.getElementById('cfGatewayUrl');
+  const cfApiKeyInput = document.getElementById('cfApiKey');
+  const cfModelInput = document.getElementById('cfModel');
   const testButton = document.getElementById('testButton');
   const saveButton = document.getElementById('saveButton');
   const statusDiv = document.getElementById('status');
@@ -36,16 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (providerSelect.value === 'gemini') {
       geminiSettingsGroup.style.display = 'block';
       openAiSettingsGroup.style.display = 'none';
-    } else {
+      cfSettingsGroup.style.display = 'none';
+    } else if (providerSelect.value === 'openai') {
       geminiSettingsGroup.style.display = 'none';
       openAiSettingsGroup.style.display = 'block';
+      cfSettingsGroup.style.display = 'none';
+    } else {
+      geminiSettingsGroup.style.display = 'none';
+      openAiSettingsGroup.style.display = 'none';
+      cfSettingsGroup.style.display = 'block';
     }
     // 切换提供商后，默认禁用保存按钮，鼓励用户先测试再保存。
     updateSaveButtonState(false);
   }
 
   // 页面加载时，从Chrome存储中加载已保存的设置
-  chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel'], (data) => {
+  chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel', 'cfGatewayUrl', 'cfApiKey', 'cfModel'], (data) => {
     if (data.aiProvider) {
       providerSelect.value = data.aiProvider;
     }
@@ -60,29 +70,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (data.openAiApiKey) {
       openAiApiKeyInput.value = data.openAiApiKey;
-      // 优化：如果加载时所有必要的设置都已存在，则直接启用保存按钮。
-      if (data.aiProvider === 'gemini' && data.geminiApiKey && data.geminiModel) {
-        updateSaveButtonState(true);
-      }
-    }
-    if (data.openAiUrl) {
-      openAiUrlInput.value = data.openAiUrl;
     }
     if (data.openAiModel) {
       openAiModelInput.value = data.openAiModel;
-      if (data.aiProvider === 'openai' && data.openAiUrl && data.openAiApiKey && data.openAiModel) {
-        updateSaveButtonState(true);
-      }
     }
-    // 根据加载的设置初始化UI显示
+    if (data.cfGatewayUrl) {
+      cfGatewayUrlInput.value = data.cfGatewayUrl;
+    }
+    if (data.cfApiKey) {
+      cfApiKeyInput.value = data.cfApiKey;
+    }
+    if (data.cfModel) {
+      cfModelInput.value = data.cfModel;
+    }
+
+    // 先根据提供商切换显示区域（updateUI 会重置保存按钮为禁用）
     updateUI();
+
+    // 若当前提供商的所有必要字段都已存在，则启用保存按钮
+    const provider = data.aiProvider || 'gemini';
+    let canSave = false;
+    if (provider === 'gemini' && data.geminiApiKey && data.geminiModel) {
+      canSave = true;
+    } else if (provider === 'openai' && data.openAiUrl && data.openAiApiKey && data.openAiModel) {
+      canSave = true;
+    } else if (provider === 'cloudflare' && data.cfGatewayUrl && data.cfApiKey && data.cfModel) {
+      canSave = true;
+    }
+    updateSaveButtonState(canSave);
   });
 
   // 监听提供商下拉框的变动
   providerSelect.addEventListener('change', updateUI);
 
   // 监听所有输入框的输入事件，任何改动都会禁用保存按钮，直到用户重新测试。
-  [geminiApiKeyInput, openAiUrlInput, openAiApiKeyInput, openAiModelInput, geminiModel].forEach(input => {
+  [geminiApiKeyInput, openAiUrlInput, openAiApiKeyInput, openAiModelInput, geminiModel, cfGatewayUrlInput, cfApiKeyInput, cfModelInput].forEach(input => {
     input.addEventListener('input', () => updateSaveButtonState(false));
   });
 
@@ -108,6 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!url || !apiKey || !model) {
         isValid = false;
         statusDiv.textContent = 'Please fill in all OpenAI-compatible interface settings.';
+      }
+      requestData.url = url;
+      requestData.apiKey = apiKey;
+      requestData.model = model;
+    } else if (provider === 'cloudflare') {
+      const url = cfGatewayUrlInput.value.trim();
+      const apiKey = cfApiKeyInput.value.trim();
+      const model = cfModelInput.value.trim();
+      if (!url || !apiKey || !model) {
+        isValid = false;
+        statusDiv.textContent = 'Please fill in all CloudFlare Gateway settings.';
       }
       requestData.url = url;
       requestData.apiKey = apiKey;
@@ -152,10 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (provider === 'gemini') {
       settingsToSave.geminiApiKey = geminiApiKeyInput.value;
       settingsToSave.geminiModel = geminiModel.value;
-    } else {
+    } else if (provider === 'openai') {
       settingsToSave.openAiUrl = openAiUrlInput.value;
       settingsToSave.openAiApiKey = openAiApiKeyInput.value;
       settingsToSave.openAiModel = openAiModelInput.value;
+    } else if (provider === 'cloudflare') {
+      settingsToSave.cfGatewayUrl = cfGatewayUrlInput.value;
+      settingsToSave.cfApiKey = cfApiKeyInput.value;
+      settingsToSave.cfModel = cfModelInput.value;
     }
 
     // 将设置保存到Chrome本地存储

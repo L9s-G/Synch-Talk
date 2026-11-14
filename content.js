@@ -26,10 +26,8 @@ document.addEventListener('mousemove', (event) => {
 document.addEventListener('keydown', (event) => {
   // Listen for the Control key press
   if (event.key === 'Control') {
-    // Prevent default browser actions and stop propagation to ensure our handler is prioritized.
-    // This can prevent issues with other page scripts or browser shortcuts.
-    event.stopImmediatePropagation();
-    event.preventDefault();
+    // 不阻止事件传播/默认行为，避免干扰宿主网页对 Ctrl 键的处理；
+    // 仅在成功捕获到文本时才阻止默认（多数页面对单独的 Ctrl 无默认行为，此调用通常无副作用）。
 
     // Provide visual feedback to the user that an action is being processed.
     document.body.style.cursor = 'wait';
@@ -44,14 +42,22 @@ document.addEventListener('keydown', (event) => {
     // 2. 如果没有选中文本，则尝试获取当前鼠标指针下方元素的父元素的`innerText`。
     //    这是一种启发式方法，旨在捕获用户可能感兴趣的整个文本块（如段落）。
     if (!text) {
-      const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
-      if (elementUnderCursor && elementUnderCursor.parentElement) {
-        text = elementUnderCursor.parentElement.innerText.trim();
+      if (typeof mouseX === 'number' && typeof mouseY === 'number') {
+        const elementUnderCursor = document.elementFromPoint(mouseX, mouseY);
+        if (elementUnderCursor && elementUnderCursor.parentElement) {
+          text = elementUnderCursor.parentElement.innerText.trim();
+        }
       }
     }
 
-    // 如果成功捕获到文本，则将其发送到后台脚本。
+    // 避免捕获过大的文本块导致请求体过大
+    if (text && text.length > 5000) {
+      text = text.slice(0, 5000);
+    }
+
+    // 仅在成功捕获到文本时阻止默认行为，尽量减少对宿主页面的干扰。
     if (text) {
+      try { event.preventDefault(); } catch (e) {}
       if (chrome.runtime && chrome.runtime.id) {
         chrome.runtime.sendMessage({
           type: 'captureContent',

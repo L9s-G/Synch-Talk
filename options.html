@@ -16,6 +16,7 @@
       <select id="providerSelect">
         <option value="gemini">Google Gemini</option>
         <option value="openai">OpenAI (or compatible API)</option>
+        <option value="cloudflare">CloudFlare AI Gateway</option>
       </select>
     </div>
 
@@ -46,6 +47,21 @@
       <div class="input-group">
         <label for="openAiModel">Model Name:</label>
         <input type="text" id="openAiModel" placeholder="e.g., gpt-4o-mini">
+      </div>
+    </div>
+
+    <div id="cloudflare-settings-group" style="display: none;">
+      <div class="input-group">
+        <label for="cfGatewayUrl">CloudFlare Gateway URL:</label>
+        <input type="text" id="cfGatewayUrl" placeholder="e.g., https://gateway.ai.cloudflare.com/v1/account/project/model">
+      </div>
+      <div class="input-group">
+        <label for="cfApiKey">CloudFlare API Key:</label>
+        <input type="text" id="cfApiKey" placeholder="Enter your cf-aig API key">
+      </div>
+      <div class="input-group">
+        <label for="cfModel">Model Name:</label>
+        <input type="text" id="cfModel" placeholder="e.g., gpt-4o">
       </div>
     </div>
 

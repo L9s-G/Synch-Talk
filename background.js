@@ -12,62 +12,41 @@ function buildDynamicPrompt(userInput, targetLanguages, isTutorMode, isGemini) {
   const targetLanguagesString = targetLanguages.join(', ');
   const translationsExample = targetLanguages.slice(0, 2).map(lang => `"${lang}": "..."`).join(', ');
 
-  const persona = `You are a professional linguistic expert and localization specialist proficient in ${targetLanguagesString}.`;
-  
-  const rules = `
-  ### Strict Rules for Translation
-  - **Localization over Literalism**: Do NOT translate word-for-word. Focus on capturing the underlying meaning, tone, and cultural context.
-  - **Professional Terminology**: Identify professional, technical, or industry-specific terms. Research or apply their standardized target-language equivalents (industry-standard nomenclature) rather than literal translations.
-  - **Native Fluency**: The output must sound as if it were written by a native speaker in each target language.
-  - **Exclusion Rule**: The "translations" object MUST NOT contain the detected source language.`;
-
   if (isGemini) {
     const safeUserInput = JSON.stringify(userInput);
-    let taskDescription = isTutorMode ? 
-    `### Task
-    1. **Detect** the source language of the input.
-    2. **Polish** the input text for natural flow, grammatical accuracy, and idiomatic correctness (store in "corrected_text").
-    3. **Translate** the polished text into the OTHER active languages in the list: ${targetLanguagesString}.` :
-    `### Task
-    1. **Detect** the source language of the input.
-    2. **Translate** the input text into the OTHER active languages in the list: ${targetLanguagesString}.`;
+    const taskDesc = isTutorMode
+      ? 'Detect source, polish input (store in "corrected_text"), then translate to: ' + targetLanguagesString
+      : 'Detect source, then translate to: ' + targetLanguagesString;
 
-    const format = `
-    ### Output Format (JSON Only)
-    {
-      "mode": "${isTutorMode ? 'tutor' : 'translator'}",
-      "detected_source_language": "...",
-      ${isTutorMode ? '"corrected_text": "...",' : ''}
-      "translations": {
-        ${translationsExample}
-      }
-    }`;
+    return `You are a professional translator. Rules: localize (not literal), use industry-standard terms, sound native, exclude source language from output.
 
-    // 重新组合顺序：身份 -> 用户输入 -> 任务 -> 规则 -> 格式
-    return `${persona}
-
-### User Input to Process:
+Input:
 <<<<
 ${safeUserInput}
 >>>>
 
-${taskDescription}
+Task: ${taskDesc}
 
-${rules}
+Output JSON:
+{
+  "mode": "${isTutorMode ? 'tutor' : 'translator'}",
+  "detected_source_language": "...",
+  ${isTutorMode ? '"corrected_text": "...",' : ''}
+  "translations": { ${translationsExample} }
+}
 
-${format}
-
-**Final Requirement**: Provide your output ONLY in a valid JSON format. Do not include any conversational text outside the JSON.`;
+Return ONLY valid JSON.`;
   } else {
     // OpenAI 兼容格式
-    const systemPrompt = `${persona}
-    ${isTutorMode ? 'Task: Detect source, Polish input (store in "corrected_text"), and Translate to OTHER active languages.' : 'Task: Detect source and Translate to OTHER active languages.'}
-    Active languages: ${targetLanguagesString}.
-    ${rules}
-    
-    Output JSON keys: "mode", "detected_source_language", ${isTutorMode ? '"corrected_text", ' : ''}"translations".`;
+    const taskDesc = isTutorMode
+      ? 'Detect source, polish input (store in "corrected_text"), then translate to: ' + targetLanguagesString
+      : 'Detect source, then translate to: ' + targetLanguagesString;
 
-    return systemPrompt;
+    return `You are a professional translator. Rules: localize (not literal), use industry-standard terms, sound native, exclude source language from output.
+
+Task: ${taskDesc}
+Active languages: ${targetLanguagesString}.
+Output JSON keys: "mode", "detected_source_language", ${isTutorMode ? '"corrected_text", ' : ''}"translations".`;
   }
 }
 
@@ -83,12 +62,112 @@ function buildReverseCheckPrompt(textToTranslate) {
 }
 
 /**
+ * 从 AI 响应的 content/parts 中提取文本，兼容字符串与数组分片形式。
+ * @param {*} value - 可能是字符串、数组或对象。
+ * @returns {string} - 拼接后的文本。
+ */
+function extractText(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value.map(item => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
+        if (item.text != null) return extractText(item.text);
+        if (item.content != null) return extractText(item.content);
+        if (item.value != null) return extractText(item.value);
+        if (item.parts != null) return extractText(item.parts);
+      }
+      return '';
+    }).join('');
+  }
+  if (typeof value === 'object') {
+    if (value.text != null) return extractText(value.text);
+    if (value.content != null) return extractText(value.content);
+    if (value.parts != null) return extractText(value.parts);
+    if (value.value != null) return extractText(value.value);
+    // 无已知键时，优先 JSON 序列化，避免 String() 产生 "[object Object]"
+    try { return JSON.stringify(value); } catch (e) { return String(value); }
+  }
+  return String(value);
+}
+
+/**
+ * 将 AI 返回的可能是数组/对象的值规范化为可显示的字符串。
+ * 后台负责 schema 感知的归一化；UI 侧仅有 schema-agnostic 的类型兜底。
+ * @param {*} value
+ * @returns {string}
+ */
+function normalizeDisplayValue(value) {
+  if (value == null) return '';
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '';
+    return value.map(normalizeDisplayValue).filter(Boolean).join('\n');
+  }
+  if (typeof value === 'object') {
+    for (const key of ['text', 'translation', 'content', 'value', 'result', 'output']) {
+      if (value[key] != null) return normalizeDisplayValue(value[key]);
+    }
+    try { return JSON.stringify(value); } catch (e) { return String(value); }
+  }
+  return String(value);
+}
+
+/**
+ * 将 AI 响应规范化为稳定的领域模型，使 UI 不依赖原始返回结构。
+ * @param {*} data
+ * @returns {{ mode?: string, detected_source_language?: string, corrected_text?: string, translations?: Record<string,string>, error?: string }}
+ */
+function normalizeAiResponse(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  if (data.error) return data;
+  const out = { ...data };
+  if (out.detected_source_language != null) {
+    out.detected_source_language = normalizeDisplayValue(out.detected_source_language);
+  }
+  if (out.corrected_text != null) {
+    out.corrected_text = normalizeDisplayValue(out.corrected_text);
+  }
+  if (out.translations != null) {
+    if (typeof out.translations !== 'object') {
+      out.translations = {};
+    } else if (Array.isArray(out.translations)) {
+      const obj = {};
+      out.translations.forEach(item => {
+        if (Array.isArray(item) && item.length >= 2) {
+          obj[item[0]] = normalizeDisplayValue(item[1]);
+        } else if (item && typeof item === 'object') {
+          const lang = item.language || item.lang || item.target || item.name;
+          if (lang != null) {
+            obj[lang] = normalizeDisplayValue(item.text || item.translation || item.content || item.value);
+          }
+        }
+      });
+      out.translations = obj;
+    } else {
+      const obj = {};
+      for (const key in out.translations) {
+        obj[key] = normalizeDisplayValue(out.translations[key]);
+      }
+      out.translations = obj;
+    }
+  }
+  return out;
+}
+
+/**
  * 清理和规范化来自AI API的响应文本。
  * 移除Markdown代码块、多余的逗号，并尝试解析为JSON。
  * @param {string} text - 从API获取的原始响应文本。
  * @returns {string|object} - 如果能解析为JSON，则返回解析后的对象或其中的'text'字段；否则返回清理后的字符串。
  */
 function cleanApiResponse(text) {
+  if (text == null) return '';
+  if (Array.isArray(text)) {
+    text = text.map(item => (typeof item === 'string' ? item : (item && item.text != null ? item.text : JSON.stringify(item)))).join('');
+  }
+  text = String(text);
+
   // 移除Markdown代码块标记 (```json ... ```)
   const codeBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
   let cleanedText = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim();
@@ -100,8 +179,12 @@ function cleanApiResponse(text) {
   try {
     const parsed = JSON.parse(cleanedText);
     // 如果解析后的对象有 'text' 属性（常见于简单文本响应），则直接返回其值
-    if (parsed.text) {
-      return parsed.text.trim();
+    if (parsed && parsed.text != null) {
+      // 数组不再只取第一项，统一走 normalizeDisplayValue 拼接，避免丢内容
+      const textValue = normalizeDisplayValue(parsed.text);
+      if (textValue !== '') {
+        return textValue.trim();
+      }
     }
     // 否则返回整个解析后的对象
     return parsed;
@@ -150,7 +233,7 @@ async function makeApiCall(provider, endpoint, headers, body) {
  * @returns {Promise<object>} - 返回一个包含翻译结果、修正文本或错误信息的对象。
  */
 async function processAiInput(userInput, targetLanguages, isTutorMode) {
-  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
+  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel', 'cfGatewayUrl', 'cfApiKey', 'cfModel']);
   const provider = settings.aiProvider || 'gemini';
 
   let prompt;
@@ -169,7 +252,11 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
     apiResponse = await makeApiCall('Gemini', endpoint, headers, body);
 
     if (apiResponse.error) return apiResponse;
-    const cleanedContent = cleanApiResponse(apiResponse.candidates[0].content.parts[0].text);
+    const geminiText = extractText(apiResponse?.candidates?.[0]?.content?.parts);
+    if (!geminiText) {
+      return { error: 'Unexpected response from Gemini API.' };
+    }
+    const cleanedContent = cleanApiResponse(geminiText);
 
     try {
       // cleanedContent可能已经是对象了
@@ -193,7 +280,11 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
     apiResponse = await makeApiCall('OpenAI', openAiUrl, headers, body);
 
     if (apiResponse.error) return apiResponse;
-    const cleanedContent = cleanApiResponse(apiResponse.choices[0].message.content);
+    const openAiText = extractText(apiResponse?.choices?.[0]?.message?.content);
+    if (!openAiText) {
+      return { error: 'Unexpected response from OpenAI API.' };
+    }
+    const cleanedContent = cleanApiResponse(openAiText);
 
     try {
       // cleanedContent可能已经是对象了
@@ -202,10 +293,37 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       return { error: `Invalid JSON format returned by OpenAI API: ${e.message}` };
     }
 
+  } else if (provider === 'cloudflare') {
+    const { cfGatewayUrl, cfApiKey, cfModel } = settings;
+    if (!cfGatewayUrl || !cfApiKey || !cfModel) {
+      return { error: 'Please set your CloudFlare Gateway URL, key, and model in the options page.' };
+    }
+    prompt = buildDynamicPrompt(userInput, targetLanguages, isTutorMode, false);
+    const body = {
+      model: cfModel,
+      response_format: { type: "json_object" },
+      messages: [{ role: "system", content: prompt }, { role: "user", content: userInput }]
+    };
+    const headers = { 'Content-Type': 'application/json', 'cf-aig-authorization': `Bearer ${cfApiKey}` };
+    apiResponse = await makeApiCall('CloudFlare', cfGatewayUrl, headers, body);
+
+    if (apiResponse.error) return apiResponse;
+    const cfText = extractText(apiResponse?.choices?.[0]?.message?.content);
+    if (!cfText) {
+      return { error: 'Unexpected response from CloudFlare API.' };
+    }
+    const cleanedContent = cleanApiResponse(cfText);
+
+    try {
+      responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
+    } catch (e) {
+      return { error: `Invalid JSON format returned by CloudFlare API: ${e.message}` };
+    }
+
   } else {
     return { error: 'Unknown AI service provider.' };
   }
-  return responseData;
+  return normalizeAiResponse(responseData);
 }
 
 /**
@@ -214,7 +332,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
  * @returns {Promise<object>} - 返回一个包含翻译结果或错误信息的对象。
  */
 async function performReverseCheck(textToTranslate) {
-  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel']);
+  const settings = await chrome.storage.local.get(['aiProvider', 'geminiApiKey', 'geminiModel', 'openAiUrl', 'openAiApiKey', 'openAiModel', 'cfGatewayUrl', 'cfApiKey', 'cfModel']);
   const provider = settings.aiProvider || 'gemini';
 
   const prompt = buildReverseCheckPrompt(textToTranslate);
@@ -231,7 +349,8 @@ async function performReverseCheck(textToTranslate) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
     apiResponse = await makeApiCall('Gemini', endpoint, headers, body);
     if (apiResponse.error) return apiResponse;
-    content = apiResponse.candidates[0].content.parts[0].text;
+    content = extractText(apiResponse?.candidates?.[0]?.content?.parts);
+    if (!content) return { error: 'Unexpected response from Gemini API.' };
 
   } else if (provider === 'openai') {
     const { openAiUrl, openAiApiKey, openAiModel } = settings;
@@ -242,7 +361,20 @@ async function performReverseCheck(textToTranslate) {
     const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` };
     apiResponse = await makeApiCall('OpenAI', openAiUrl, headers, body);
     if (apiResponse.error) return apiResponse;
-    content = apiResponse.choices[0].message.content;
+    content = extractText(apiResponse?.choices?.[0]?.message?.content);
+    if (!content) return { error: 'Unexpected response from OpenAI API.' };
+
+  } else if (provider === 'cloudflare') {
+    const { cfGatewayUrl, cfApiKey, cfModel } = settings;
+    if (!cfGatewayUrl || !cfApiKey || !cfModel) {
+      return { error: 'Please set your CloudFlare Gateway to use the reverse check function.' };
+    }
+    const body = { model: cfModel, messages: [{ role: "user", content: prompt }] };
+    const headers = { 'Content-Type': 'application/json', 'cf-aig-authorization': `Bearer ${cfApiKey}` };
+    apiResponse = await makeApiCall('CloudFlare', cfGatewayUrl, headers, body);
+    if (apiResponse.error) return apiResponse;
+    content = extractText(apiResponse?.choices?.[0]?.message?.content);
+    if (!content) return { error: 'Unexpected response from CloudFlare API.' };
 
   } else {
     return { error: 'Unknown AI service provider.' };
@@ -250,8 +382,11 @@ async function performReverseCheck(textToTranslate) {
 
   // Clean the response to ensure it is plain text
   const cleanedText = cleanApiResponse(content);
+  const finalText = typeof cleanedText === 'string'
+    ? cleanedText
+    : (cleanedText && typeof cleanedText.text === 'string' ? cleanedText.text : JSON.stringify(cleanedText));
 
-  return { text: cleanedText.trim() };
+  return { text: finalText.trim() };
 }
 
 /**
@@ -262,10 +397,11 @@ async function performReverseCheck(textToTranslate) {
  */
 async function testApi(provider, settings) {
   let prompt, body, headers, endpoint;
+  const providerName = provider === 'gemini' ? 'Gemini' : provider === 'openai' ? 'OpenAI' : provider === 'cloudflare' ? 'CloudFlare' : provider;
 
   if (provider === 'gemini') {
     if (!settings.apiKey) return { success: false, error: 'Please enter your Gemini API key.' };
-    const model = settings.model
+    const model = settings.model || 'gemini-flash-latest';
     prompt = "Test API connectivity. Respond with a single word: 'OK'.";
     body = { contents: [{ parts: [{ text: prompt }] }] };
     headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.apiKey };
@@ -280,26 +416,39 @@ async function testApi(provider, settings) {
     headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.apiKey}` };
     endpoint = settings.url;
 
+  } else if (provider === 'cloudflare') {
+    if (!settings.url || !settings.apiKey || !settings.model) {
+      return { success: false, error: 'Please fill in all CloudFlare Gateway settings.' };
+    }
+    prompt = "Test API connectivity. Respond with a single word: 'OK'.";
+    body = { model: settings.model, messages: [{ role: "user", content: prompt }] };
+    headers = { 'Content-Type': 'application/json', 'cf-aig-authorization': `Bearer ${settings.apiKey}` };
+    endpoint = settings.url;
+
   } else {
     return { success: false, error: 'Testing this provider is not supported.' };
   }
 
-  const apiResponse = await makeApiCall(provider, endpoint, headers, body);
+  const apiResponse = await makeApiCall(providerName, endpoint, headers, body);
   if (apiResponse.error) {
     return { success: false, error: apiResponse.error };
   }
 
   let content;
   if (provider === 'gemini') {
-    content = apiResponse.candidates[0].content.parts[0].text;
+    content = extractText(apiResponse?.candidates?.[0]?.content?.parts);
   } else {
-    content = apiResponse.choices[0].message.content;
+    // openai or cloudflare — both use the same response structure
+    content = extractText(apiResponse?.choices?.[0]?.message?.content);
+  }
+  if (!content) {
+    return { success: false, error: 'Unexpected response from API.' };
   }
 
   // Clean the test result to ensure proper logic
   const cleanedContent = cleanApiResponse(content);
 
-  if (cleanedContent && cleanedContent.trim().toLowerCase().includes('ok')) {
+  if (cleanedContent && String(cleanedContent).trim().toLowerCase().includes('ok')) {
     return { success: true, message: 'API configuration successful!' };
   } else {
     return { success: false, error: `API returned unexpected response: ${cleanedContent}` };
