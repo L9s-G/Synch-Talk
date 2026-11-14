@@ -389,7 +389,7 @@ sendBtn.addEventListener('click', () => {
   });
 
   userInputTextarea.value = '';
-  userInputTextarea.style.height = '60px'; // 重置输入框高度
+  userInputTextarea.style.height = '96px'; // 恢复输入区初始高度（含原按钮行区域）
 });
 
 // 监听输入框的键盘事件，实现 Ctrl+Enter 发送消息

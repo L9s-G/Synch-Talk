@@ -175,12 +175,32 @@ function cleanApiResponse(text) {
   // 移除JSON中可能导致解析错误的尾随逗号
   cleanedText = cleanedText.replace(/,(\s*[}\]])/g, '$1');
 
-  // 尝试将清理后的文本解析为JSON
-  try {
-    const parsed = JSON.parse(cleanedText);
+  // 尝试解析：先直接，失败则做常见修复后重试
+  const tryParse = (s) => {
+    try { return JSON.parse(s); } catch (e) { return null; }
+  };
+
+  let parsed = tryParse(cleanedText);
+
+  // 修复1：键与值之间缺失冒号（"key" "value" -> "key": "value"）
+  if (!parsed) {
+    const repaired = cleanedText.replace(/"([^"\n]+)"\s+"([^"\n]*)"/g, '"$1": "$2"');
+    parsed = tryParse(repaired);
+    if (parsed) cleanedText = repaired;
+  }
+
+  // 修复2：提取第一个完整的 {...} 块再解析
+  if (!parsed) {
+    const m = cleanedText.match(/\{[\s\S]*\}/);
+    if (m) {
+      parsed = tryParse(m[0]);
+      if (parsed) cleanedText = m[0];
+    }
+  }
+
+  if (parsed) {
     // 如果解析后的对象有 'text' 属性（常见于简单文本响应），则直接返回其值
     if (parsed && parsed.text != null) {
-      // 数组不再只取第一项，统一走 normalizeDisplayValue 拼接，避免丢内容
       const textValue = normalizeDisplayValue(parsed.text);
       if (textValue !== '') {
         return textValue.trim();
@@ -188,10 +208,10 @@ function cleanApiResponse(text) {
     }
     // 否则返回整个解析后的对象
     return parsed;
-  } catch (e) {
-    // Not JSON, return directly
-    return cleanedText;
   }
+
+  // Not JSON, return directly
+  return cleanedText;
 }
 
 // Helper function: Standardize API call handling
@@ -285,7 +305,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       // cleanedContent可能已经是对象了
       responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
     } catch (e) {
-      return { error: `Invalid JSON format returned by Gemini API: ${e.message}` };
+      return { error: `Invalid JSON format returned by Gemini API: ${e.message}. Raw: ${String(cleanedContent).slice(0, 200)}` };
     }
 
   } else if (provider === 'openai') {
@@ -313,7 +333,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       // cleanedContent可能已经是对象了
       responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
     } catch (e) {
-      return { error: `Invalid JSON format returned by OpenAI API: ${e.message}` };
+      return { error: `Invalid JSON format returned by OpenAI API: ${e.message}. Raw: ${String(cleanedContent).slice(0, 200)}` };
     }
 
   } else if (provider === 'cloudflare') {
@@ -340,7 +360,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
     try {
       responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
     } catch (e) {
-      return { error: `Invalid JSON format returned by CloudFlare API: ${e.message}` };
+      return { error: `Invalid JSON format returned by CloudFlare API: ${e.message}. Raw: ${String(cleanedContent).slice(0, 200)}` };
     }
 
   } else {
