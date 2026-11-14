@@ -212,15 +212,35 @@ async function makeApiCall(provider, endpoint, headers, body) {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      let detail = '';
+      try { detail = await response.text(); } catch (e) { detail = ''; }
+      return { error: `API Error: ${response.status} ${response.statusText}${detail ? ' - ' + detail.slice(0, 300) : ''}`, status: response.status };
     }
 
     const data = await response.json();
     return data;
 
   } catch (error) {
-    return { error: `Unable to connect to ${provider} API: ${error.message}` };
+    return { error: `Unable to connect to ${provider} API: ${error.message}`, status: 0 };
   }
+}
+
+/**
+ * OpenAI 兼容接口的调用封装：优先使用 response_format=json_object，
+ * 若服务端不支持（HTTP 400），则自动降级为不带该字段的请求。
+ * @param {string} provider
+ * @param {string} endpoint
+ * @param {object} headers
+ * @param {object} body - 含 response_format 的请求体
+ * @returns {Promise<object>}
+ */
+async function callOpenAiLike(provider, endpoint, headers, body) {
+  const first = await makeApiCall(provider, endpoint, headers, body);
+  if (first.error && first.status === 400 && body && body.response_format) {
+    const { response_format, ...rest } = body;
+    return makeApiCall(provider, endpoint, headers, rest);
+  }
+  return first;
 }
 
 // ---- API Core Functionality ----
@@ -245,6 +265,9 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       return { error: 'Please set your Gemini API key in the options page.' };
     }
     const model = settings.geminiModel || 'gemini-flash-latest'; // Default to gemini-flash-latest if not set
+    if (!/^[a-zA-Z0-9._-]+$/.test(model)) {
+      return { error: 'Invalid Gemini model name.' };
+    }
     prompt = buildDynamicPrompt(userInput, targetLanguages, isTutorMode, true);
     const body = { contents: [{ parts: [{ text: prompt }] }] };
     const headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.geminiApiKey };
@@ -277,7 +300,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       messages: [{ role: "system", content: prompt }, { role: "user", content: userInput }]
     };
     const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` };
-    apiResponse = await makeApiCall('OpenAI', openAiUrl, headers, body);
+    apiResponse = await callOpenAiLike('OpenAI', openAiUrl, headers, body);
 
     if (apiResponse.error) return apiResponse;
     const openAiText = extractText(apiResponse?.choices?.[0]?.message?.content);
@@ -305,7 +328,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       messages: [{ role: "system", content: prompt }, { role: "user", content: userInput }]
     };
     const headers = { 'Content-Type': 'application/json', 'cf-aig-authorization': `Bearer ${cfApiKey}` };
-    apiResponse = await makeApiCall('CloudFlare', cfGatewayUrl, headers, body);
+    apiResponse = await callOpenAiLike('CloudFlare', cfGatewayUrl, headers, body);
 
     if (apiResponse.error) return apiResponse;
     const cfText = extractText(apiResponse?.choices?.[0]?.message?.content);
@@ -359,7 +382,7 @@ async function performReverseCheck(textToTranslate) {
     }
     const body = { model: openAiModel, messages: [{ role: "user", content: prompt }] };
     const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAiApiKey}` };
-    apiResponse = await makeApiCall('OpenAI', openAiUrl, headers, body);
+    apiResponse = await callOpenAiLike('OpenAI', openAiUrl, headers, body);
     if (apiResponse.error) return apiResponse;
     content = extractText(apiResponse?.choices?.[0]?.message?.content);
     if (!content) return { error: 'Unexpected response from OpenAI API.' };
@@ -371,7 +394,7 @@ async function performReverseCheck(textToTranslate) {
     }
     const body = { model: cfModel, messages: [{ role: "user", content: prompt }] };
     const headers = { 'Content-Type': 'application/json', 'cf-aig-authorization': `Bearer ${cfApiKey}` };
-    apiResponse = await makeApiCall('CloudFlare', cfGatewayUrl, headers, body);
+    apiResponse = await callOpenAiLike('CloudFlare', cfGatewayUrl, headers, body);
     if (apiResponse.error) return apiResponse;
     content = extractText(apiResponse?.choices?.[0]?.message?.content);
     if (!content) return { error: 'Unexpected response from CloudFlare API.' };
@@ -402,6 +425,9 @@ async function testApi(provider, settings) {
   if (provider === 'gemini') {
     if (!settings.apiKey) return { success: false, error: 'Please enter your Gemini API key.' };
     const model = settings.model || 'gemini-flash-latest';
+    if (!/^[a-zA-Z0-9._-]+$/.test(model)) {
+      return { success: false, error: 'Invalid Gemini model name.' };
+    }
     prompt = "Test API connectivity. Respond with a single word: 'OK'.";
     body = { contents: [{ parts: [{ text: prompt }] }] };
     headers = { 'Content-Type': 'application/json', 'X-goog-api-key': settings.apiKey };

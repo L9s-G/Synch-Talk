@@ -11,6 +11,7 @@ const tutorModeToggle = document.getElementById('tutor-mode-toggle');
 const languages = ['Chinese', 'English', 'Greek', 'French', 'German', 'Japanese', 'Korean'];
 let selectedTargetLanguages = [];
 let isTutorMode = false;
+let pendingCapturedText = null;
 
 // --- 语言选择相关功能 ---
 
@@ -376,6 +377,15 @@ sendBtn.addEventListener('click', () => {
       chatArea.appendChild(errorMessage);
       scrollChatToBottom();
     }
+
+    // 处理在请求期间捕获到的待发送文本
+    if (pendingCapturedText) {
+      const next = pendingCapturedText;
+      pendingCapturedText = null;
+      userInputTextarea.value = next;
+      userInputTextarea.dispatchEvent(new Event('input'));
+      setTimeout(() => sendBtn.click(), 0);
+    }
   });
 
   userInputTextarea.value = '';
@@ -457,9 +467,16 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'session' && changes.capturedContent) {
     const newContent = changes.capturedContent.newValue;
     if (newContent && newContent.text) {
-      userInputTextarea.value = newContent.text;
-      userInputTextarea.dispatchEvent(new Event('input'));
-      sendBtn.click(); // 自动触发发送
+      if (sendBtn.disabled) {
+        // 请求进行中：排队，待当前请求结束后发送
+        pendingCapturedText = newContent.text;
+        userInputTextarea.value = newContent.text;
+        userInputTextarea.dispatchEvent(new Event('input'));
+      } else {
+        userInputTextarea.value = newContent.text;
+        userInputTextarea.dispatchEvent(new Event('input'));
+        sendBtn.click(); // 自动触发发送
+      }
     }
   }
 });
