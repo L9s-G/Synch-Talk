@@ -29,12 +29,6 @@ document.addEventListener('keydown', (event) => {
     // 不阻止事件传播/默认行为，避免干扰宿主网页对 Ctrl 键的处理；
     // 仅在成功捕获到文本时才阻止默认（多数页面对单独的 Ctrl 无默认行为，此调用通常无副作用）。
 
-    // Provide visual feedback to the user that an action is being processed.
-    document.body.style.cursor = 'wait';
-    setTimeout(() => {
-      document.body.style.cursor = 'default';
-    }, 500);
-
     let text = window.getSelection().toString().trim();
 
     // 文本捕获策略：
@@ -55,8 +49,10 @@ document.addEventListener('keydown', (event) => {
       text = text.slice(0, 5000);
     }
 
-    // 仅在成功捕获到文本时阻止默认行为，尽量减少对宿主页面的干扰。
+    // 仅在成功捕获到文本时阻止默认行为并给出视觉反馈，尽量减少对宿主页面的干扰。
     if (text) {
+      document.body.style.cursor = 'wait';
+      setTimeout(() => { document.body.style.cursor = 'default'; }, 500);
       try { event.preventDefault(); } catch (e) {}
       if (chrome.runtime && chrome.runtime.id) {
         chrome.runtime.sendMessage({

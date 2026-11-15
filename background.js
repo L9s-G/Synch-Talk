@@ -119,7 +119,10 @@ function normalizeAiValue(value) {
  * @returns {{ mode?: string, detected_source_language?: string, corrected_text?: string, translations?: Record<string,string>, error?: string }}
  */
 function normalizeAiResponse(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  // 顶层非普通对象（数组/基本类型/null）时，转换为错误，避免 UI 静默空白
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { error: 'Unexpected response format from AI.', raw: data };
+  }
   if (data.error) return data;
   const out = { ...data };
   if (out.detected_source_language != null) {
@@ -161,6 +164,21 @@ function normalizeAiResponse(data) {
  * @param {string} text - 从API获取的原始响应文本。
  * @returns {string|object} - 如果能解析为JSON，则返回解析后的对象或其中的'text'字段；否则返回清理后的字符串。
  */
+/**
+ * 生成用于错误信息的原始响应片段。
+ * @param {*} value
+ * @returns {string}
+ */
+function rawSnippet(value) {
+  let s;
+  if (value && typeof value === 'object') {
+    try { s = JSON.stringify(value); } catch (e) { s = String(value); }
+  } else {
+    s = String(value);
+  }
+  return s.slice(0, 200);
+}
+
 function cleanApiResponse(text) {
   if (text == null) return '';
   if (Array.isArray(text)) {
@@ -199,8 +217,9 @@ function cleanApiResponse(text) {
   }
 
   if (parsed) {
-    // 如果解析后的对象有 'text' 属性（常见于简单文本响应），则直接返回其值
-    if (parsed && parsed.text != null) {
+    // 仅在没有 translations 字段时才把顶层 text 当作纯文本响应提取，
+    // 避免把结构化翻译结果误当成文本而丢失 translations。
+    if (parsed && parsed.text != null && parsed.translations == null) {
       const textValue = normalizeAiValue(parsed.text);
       if (textValue !== '') {
         return textValue.trim();
@@ -256,9 +275,13 @@ async function makeApiCall(provider, endpoint, headers, body) {
  */
 async function callOpenAiLike(provider, endpoint, headers, body) {
   const first = await makeApiCall(provider, endpoint, headers, body);
-  if (first.error && first.status === 400 && body && body.response_format) {
-    const { response_format, ...rest } = body;
-    return makeApiCall(provider, endpoint, headers, rest);
+  if (first.error && body && body.response_format) {
+    const msg = String(first.error).toLowerCase();
+    const formatRelated = first.status === 400 && (msg.includes('response_format') || msg.includes('json_object') || msg.includes('unsupported'));
+    if (formatRelated) {
+      const { response_format, ...rest } = body;
+      return makeApiCall(provider, endpoint, headers, rest);
+    }
   }
   return first;
 }
@@ -305,7 +328,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       // cleanedContent可能已经是对象了
       responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
     } catch (e) {
-      return { error: `Invalid JSON format returned by Gemini API: ${e.message}. Raw: ${String(cleanedContent).slice(0, 200)}` };
+      return { error: `Invalid JSON format returned by Gemini API: ${e.message}. Raw: ${rawSnippet(cleanedContent)}` };
     }
 
   } else if (provider === 'openai') {
@@ -333,7 +356,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
       // cleanedContent可能已经是对象了
       responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
     } catch (e) {
-      return { error: `Invalid JSON format returned by OpenAI API: ${e.message}. Raw: ${String(cleanedContent).slice(0, 200)}` };
+      return { error: `Invalid JSON format returned by OpenAI API: ${e.message}. Raw: ${rawSnippet(cleanedContent)}` };
     }
 
   } else if (provider === 'cloudflare') {
@@ -360,7 +383,7 @@ async function processAiInput(userInput, targetLanguages, isTutorMode) {
     try {
       responseData = typeof cleanedContent === 'string' ? JSON.parse(cleanedContent) : cleanedContent;
     } catch (e) {
-      return { error: `Invalid JSON format returned by CloudFlare API: ${e.message}. Raw: ${String(cleanedContent).slice(0, 200)}` };
+      return { error: `Invalid JSON format returned by CloudFlare API: ${e.message}. Raw: ${rawSnippet(cleanedContent)}` };
     }
 
   } else {

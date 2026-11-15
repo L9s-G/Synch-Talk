@@ -280,8 +280,8 @@ textarea {
   width: 100%;
   min-height: 96px;
   /* 原 60px 输入区 + 原 controls 行的 36px，向下延伸且维持原顶部位置 */
-  max-height: 120px;
-  /* 自动扩展上限保持原值 */
+  max-height: 156px;
+  /* 原 120px 上限 + controls 行的 36px 延伸区域 */
   padding: 10px;
   margin-bottom: 0;
   border-radius: 12px;
