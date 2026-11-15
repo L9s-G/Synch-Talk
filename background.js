@@ -277,7 +277,7 @@ async function callOpenAiLike(provider, endpoint, headers, body) {
   const first = await makeApiCall(provider, endpoint, headers, body);
   if (first.error && body && body.response_format) {
     const msg = String(first.error).toLowerCase();
-    const formatRelated = first.status === 400 && (msg.includes('response_format') || msg.includes('json_object') || msg.includes('unsupported'));
+    const formatRelated = first.status === 400 && (msg.includes('response_format') || msg.includes('json_object'));
     if (formatRelated) {
       const { response_format, ...rest } = body;
       return makeApiCall(provider, endpoint, headers, rest);
